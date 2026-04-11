@@ -19,7 +19,7 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 ├── .env.example           # Modèle de configuration
 ├── routes/
 │   ├── suggester.py       # Routes : /  et  /play/<id>
-│   └── custom.py          # Routes : /custom/run, /custom/run-script, /custom/files/<path>
+│   └── custom.py          # Routes : /run, /run-script, /files/<path>
 ├── services/
 │   ├── lyrion.py          # Client JSON-RPC Lyrion
 │   └── database.py        # Accès SQLite (albums, stats)
@@ -76,6 +76,6 @@ L'application est accessible sur `http://localhost:1111`.
 |---|---|---|
 | GET/POST | `/` | Dashboard principal (suggestion d'albums + stats) |
 | GET | `/play/<album_id>` | Lance un album sur le player selectionné |
-| GET | `/custom/run?token=...` | Page HTML de déclenchement du script |
-| GET | `/custom/run-script?token=...` | Execute le script (API) |
-| GET | `/custom/files/<path>` | Sert un fichier depuis le répertoire custom data |
+| GET | `/run?token=...` | Page HTML de déclenchement du script |
+| GET | `/run-script?token=...` | Execute le script (API) |
+| GET | `/files/<path>` | Sert un fichier depuis le répertoire custom data |

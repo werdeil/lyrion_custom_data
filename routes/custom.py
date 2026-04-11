@@ -4,7 +4,7 @@ from functools import wraps
 
 from flask import Blueprint, current_app, render_template, request, abort, send_from_directory
 
-custom_bp = Blueprint("custom", __name__, url_prefix="/custom")
+custom_bp = Blueprint("custom", __name__)
 
 
 def require_token(f):
