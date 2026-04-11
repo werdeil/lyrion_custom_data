@@ -4,7 +4,7 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 
 ## Fonctionnalites
 
-- **Album Suggester** -- Propose 5 albums aléatoires depuis la bibliothèque avec pochettes, et permet de les lancer sur un player via l'API JSON-RPC de Lyrion.
+- **Album Suggester** -- Propose 5 albums aléatoires depuis la bibliothèque avec pochettes, et permet de les lancer sur un lecteur via l'API JSON-RPC de Lyrion.
 - **Statistiques de la bibliotheque** -- Albums, artistes, morceaux joués/non joués, genres, notes, paroles, velocite d'ecoute sur 30 jours.
 - **Script Runner** -- Déclenchement d'un script shell externe de generation de stats, protege par token.
 - **Serveur de fichiers** -- Sert les fichiers génerés par le script depuis un repertoire configurable.

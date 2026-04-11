@@ -29,6 +29,31 @@ def get_albums():
     return albums
 
 
+def get_albums_by_ids(album_ids):
+    if not album_ids:
+        return []
+
+    conn = get_db_conn()
+    cur = conn.cursor()
+    placeholders = ",".join("?" for _ in album_ids)
+    order_case = " ".join(f"WHEN albums.id=? THEN {idx}" for idx, _ in enumerate(album_ids))
+    query = f"""
+        SELECT albums.id,
+               albums.title,
+               contributors.name AS artist,
+               albums.artwork
+        FROM albums
+        JOIN contributors ON albums.contributor = contributors.id
+        WHERE albums.id IN ({placeholders})
+        ORDER BY CASE {order_case} END
+    """
+    params = [*album_ids, *album_ids]
+    cur.execute(query, params)
+    albums = cur.fetchall()
+    conn.close()
+    return albums
+
+
 def get_stats():
     conn = get_db_conn()
     cur = conn.cursor()
