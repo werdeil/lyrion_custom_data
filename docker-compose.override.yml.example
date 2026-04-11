@@ -1,0 +1,20 @@
+# Fichier d'exemple pour les personnalisations Docker Compose locales.
+# Copiez ce fichier en docker-compose.override.yml et adaptez-le.
+# Ce fichier est ignoré par Git via .gitignore.
+
+services:
+  lyrion-app:
+    environment:
+      # Exemple : activer un mode debug local
+      - DEBUG=1
+      - EXTRA_ENV=value
+    volumes:
+      # Exemple : monter un répertoire local en lecture-écriture
+      - ./local_data:/opt/scripts/custom_data:rw
+
+# Exemple d'ajout de service auxiliaire : Redis
+# services:
+#   redis:
+#     image: redis:latest
+#     ports:
+#       - "6379:6379"

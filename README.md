@@ -44,6 +44,18 @@ cp .env.example .env
 docker compose up -d
 ```
 
+### Personnalisation locale Docker Compose
+
+Pour ajouter des services ou des options locales sans polluer les changements Git, copiez le modèle d'override :
+
+```bash
+cp docker-compose.override.yml.example docker-compose.override.yml
+# Editer docker-compose.override.yml selon vos besoins
+docker compose up -d
+```
+
+Docker Compose charge automatiquement `docker-compose.override.yml` en complément du fichier principal.
+
 ### Sans Docker
 
 ```bash
