@@ -6,8 +6,7 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 
 - **Album Suggester** -- Propose 5 albums aléatoires depuis la bibliothèque avec pochettes, et permet de les lancer sur un lecteur via l'API JSON-RPC de Lyrion.
 - **Statistiques de la bibliotheque** -- Albums, artistes, morceaux joués/non joués, genres, notes, paroles, velocite d'ecoute sur 30 jours.
-- **Script Runner** -- Déclenchement d'un script shell externe de generation de stats, protege par token.
-- **Serveur de fichiers** -- Sert les fichiers génerés par le script depuis un repertoire configurable.
+- **Serveur de fichiers** -- Sert les fichiers depuis un repertoire configurable.
 
 ## Structure du projet
 
@@ -19,13 +18,12 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 ├── .env.example           # Modèle de configuration
 ├── routes/
 │   ├── suggester.py       # Routes : /  et  /play/<id>
-│   └── custom.py          # Routes : /run, /run-script, /files/<path>
+│   └── custom.py          # Routes : /files/<path>
 ├── services/
 │   ├── lyrion.py          # Client JSON-RPC Lyrion
 │   └── database.py        # Accès SQLite (albums, stats)
 └── templates/
-    ├── suggester.html     # Dashboard principal
-    └── run_script.html    # Page de déclenchement du script
+    └── suggester.html     # Dashboard principal
 ```
 
 ## Pre-requis
@@ -76,9 +74,7 @@ L'application est accessible sur `http://localhost:1111`.
 | `DB_PATH` | Chemin absolu vers la base SQLite de Lyrion | -- |
 | `DB_PERSIST_PATH` | Chemin absolu vers la base persistante de Lyrion | -- |
 | `SECRET_KEY` | Clé secrete Flask | `supersecretkey` |
-| `CUSTOM_TOKEN` | Token d'authentification pour le script runner | `2uUdz3lRCsfDCwEzsziu` |
 | `CUSTOM_DATA_DIR` | Répertoire des fichiers generes | `/opt/scripts/custom_data` |
-| `CUSTOM_SCRIPT_PATH` | Chemin du script shell a exécuter | `/opt/scripts/lms-custom-stats.sh` |
 | `HOST` | Adresse d'écoute | `0.0.0.0` |
 | `PORT` | Port d'écoute | `1111` |
 
@@ -88,6 +84,4 @@ L'application est accessible sur `http://localhost:1111`.
 |---|---|---|
 | GET/POST | `/` | Dashboard principal (suggestion d'albums + stats) |
 | GET | `/play/<album_id>` | Lance un album sur le player selectionné |
-| GET | `/run?token=...` | Page HTML de déclenchement du script |
-| GET | `/run-script?token=...` | Execute le script (API) |
 | GET | `/files/<path>` | Sert un fichier depuis le répertoire custom data |
