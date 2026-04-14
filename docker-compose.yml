@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     working_dir: /app
     command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt && gunicorn -w 2 --threads 2 -b 0.0.0.0:1111 app:app"
+      sh -c "pip install --no-cache-dir -r requirements.txt && gunicorn -w 1 --threads 4 -b 0.0.0.0:1111 app:app --access-logfile - --error-logfile - --log-level info"
     ports:
       - "1111:1111"
     environment:
