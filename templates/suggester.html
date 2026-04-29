@@ -109,6 +109,30 @@
                 </div>
             </div>
 
+            <!-- Track Artists -->
+            <div class="stat-group">
+                <div class="stat-group-title">
+                    <span class="stat-group-title-label">&#127917; Track Artists</span>
+                    <span class="stat-group-total">{{ stats.track_artists_total }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total</span>
+                    <span class="stat-value">{{ stats.track_artists_total }}</span>
+                </div>
+                <div class="stat-row sub">
+                    <span class="stat-label">Fully played</span>
+                    <span>{{ stats.track_artists_fully_played }} <small>({{ stats.track_artists_fully_played_pct }}%)</small></span>
+                </div>
+                <div class="stat-row sub">
+                    <span class="stat-label">Partially played</span>
+                    <span>{{ stats.track_artists_partially_played }} <small>({{ stats.track_artists_partially_played_pct }}%)</small></span>
+                </div>
+                <div class="stat-row sub">
+                    <span class="stat-label">Never played</span>
+                    <span>{{ stats.track_artists_unplayed }} <small>({{ stats.track_artists_unplayed_pct }}%)</small></span>
+                </div>
+            </div>
+
             <!-- Songs -->
             <div class="stat-group">
                 <div class="stat-group-title">

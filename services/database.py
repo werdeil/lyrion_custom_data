@@ -110,7 +110,7 @@ def get_stats():
             "songs_total_plays_apc": row["songs_total_plays_apc"] or 0,
         }
 
-        # Query 2: artists — single scan via contributor_track
+        # Query 2: artists (album artists) — single scan via contributor_track
         row = cur.execute("""
             WITH track_play AS (
                 SELECT t.id, COALESCE(apc.playcount, 0) > 0 AS is_played
@@ -140,7 +140,37 @@ def get_stats():
             "artists_partial":  row["artists_partial"] or 0,
         })
 
-        # Query 3: misc stats (genres, ratings, lyrics, velocity)
+        # Query 3: track artists — single scan via contributor_track
+        row = cur.execute("""
+            WITH track_play AS (
+                SELECT t.id, COALESCE(apc.playcount, 0) > 0 AS is_played
+                FROM tracks t
+                LEFT JOIN alternativeplaycount apc ON t.urlmd5 = apc.urlmd5
+                WHERE t.audio = 1
+            ),
+            track_artist_agg AS (
+                SELECT ct.contributor, COUNT(*) AS total, SUM(tp.is_played) AS played
+                FROM contributor_track ct
+                JOIN track_play tp ON ct.track = tp.id
+                WHERE ct.role IN (1, 5)
+                GROUP BY ct.contributor
+            )
+            SELECT
+                (SELECT COUNT(DISTINCT contributor) FROM contributor_track WHERE role IN (1, 5)) AS track_artists_total,
+                SUM(played = total)                AS track_artists_fully_played,
+                SUM(played = 0)                    AS track_artists_unplayed,
+                SUM(played > 0 AND played < total) AS track_artists_partially_played
+            FROM track_artist_agg
+        """).fetchone()
+
+        stats.update({
+            "track_artists_total": row["track_artists_total"] or 0,
+            "track_artists_fully_played": row["track_artists_fully_played"] or 0,
+            "track_artists_unplayed": row["track_artists_unplayed"] or 0,
+            "track_artists_partially_played": row["track_artists_partially_played"] or 0,
+        })
+
+        # Query 4: misc stats (genres, ratings, lyrics, velocity)
         row = cur.execute("""
             SELECT
                 (SELECT COUNT(*) FROM genres) AS genres,
@@ -165,10 +195,15 @@ def get_stats():
         stats["albums_not_fully_pct"] = pct(stats["albums_not_fully"], stats["albums_total"])
         stats["albums_never_pct"]     = pct(stats["albums_never"],     stats["albums_total"])
 
-        # Pourcentages artistes
+        # Pourcentages artistes (album artists)
         stats["artists_played_pct"]   = pct(stats["artists_played"],   stats["artists_total"])
         stats["artists_partial_pct"]  = pct(stats["artists_partial"],  stats["artists_total"])
         stats["artists_unplayed_pct"] = pct(stats["artists_unplayed"], stats["artists_total"])
+
+        # Pourcentages track artists
+        stats["track_artists_fully_played_pct"] = pct(stats["track_artists_fully_played"], stats["track_artists_total"])
+        stats["track_artists_partially_played_pct"] = pct(stats["track_artists_partially_played"], stats["track_artists_total"])
+        stats["track_artists_unplayed_pct"] = pct(stats["track_artists_unplayed"], stats["track_artists_total"])
 
         # Pourcentages songs
         stats["songs_played_pct"]       = pct(stats["songs_played_apc"],  stats["songs_total"])
