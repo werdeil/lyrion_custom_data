@@ -104,6 +104,7 @@ def get_stats():
             "albums_played":         row["albums_played"] or 0,
             "albums_not_fully":      row["albums_not_fully"] or 0,
             "albums_never":          row["albums_never"] or 0,
+            "albums_non_played":     (row["albums_not_fully"] or 0) + (row["albums_never"] or 0),
             "songs_total":           row["songs_total"] or 0,
             "songs_played_apc":      row["songs_played_apc"] or 0,
             "songs_unplayed_apc":    row["songs_unplayed_apc"] or 0,
@@ -138,6 +139,7 @@ def get_stats():
             "artists_played":   row["artists_played"] or 0,
             "artists_unplayed": row["artists_unplayed"] or 0,
             "artists_partial":  row["artists_partial"] or 0,
+            "artists_non_played": (row["artists_unplayed"] or 0) + (row["artists_partial"] or 0),
         })
 
         # Query 3: track artists — single scan via contributor_track
@@ -168,6 +170,7 @@ def get_stats():
             "track_artists_fully_played": row["track_artists_fully_played"] or 0,
             "track_artists_unplayed": row["track_artists_unplayed"] or 0,
             "track_artists_partially_played": row["track_artists_partially_played"] or 0,
+            "track_artists_non_played": (row["track_artists_unplayed"] or 0) + (row["track_artists_partially_played"] or 0),
         })
 
         # Query 4: misc stats (genres, ratings, lyrics, velocity)
@@ -194,16 +197,19 @@ def get_stats():
         stats["albums_played_pct"]    = pct(stats["albums_played"],    stats["albums_total"])
         stats["albums_not_fully_pct"] = pct(stats["albums_not_fully"], stats["albums_total"])
         stats["albums_never_pct"]     = pct(stats["albums_never"],     stats["albums_total"])
+        stats["albums_non_played_pct"] = pct(stats["albums_non_played"], stats["albums_total"])
 
         # Pourcentages artistes (album artists)
         stats["artists_played_pct"]   = pct(stats["artists_played"],   stats["artists_total"])
         stats["artists_partial_pct"]  = pct(stats["artists_partial"],  stats["artists_total"])
         stats["artists_unplayed_pct"] = pct(stats["artists_unplayed"], stats["artists_total"])
+        stats["artists_non_played_pct"] = pct(stats["artists_non_played"], stats["artists_total"])
 
         # Pourcentages track artists
         stats["track_artists_fully_played_pct"] = pct(stats["track_artists_fully_played"], stats["track_artists_total"])
         stats["track_artists_partially_played_pct"] = pct(stats["track_artists_partially_played"], stats["track_artists_total"])
         stats["track_artists_unplayed_pct"] = pct(stats["track_artists_unplayed"], stats["track_artists_total"])
+        stats["track_artists_non_played_pct"] = pct(stats["track_artists_non_played"], stats["track_artists_total"])
 
         # Pourcentages songs
         stats["songs_played_pct"]       = pct(stats["songs_played_apc"],  stats["songs_total"])
