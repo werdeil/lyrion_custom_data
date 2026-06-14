@@ -1,16 +1,16 @@
 <!doctype html>
 <html>
 <head>
-    <title>Lyrion Suggester</title>
+    <title>Lyrion Now Playing</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body data-lyrion-host="{{ lyrion_host or '' }}">
     <div class="page-header">
         <h1>
             <img class="page-logo" src="{{ url_for('static', filename='favicon.svg') }}" alt="Lyrion logo">
-            Lyrion Album Suggester
+            Lyrion Now Playing
         </h1>
         <a class="lyrion-link" href="{{ lyrion_host or '#' }}" target="_blank" rel="noopener noreferrer" title="Ouvrir Lyrion">
             <img src="{{ url_for('static', filename='lyrion.svg') }}" alt="Logo Lyrion">
@@ -32,30 +32,25 @@
                 {% endfor %}
             </select>
             {% if not selected_player %}
-                <span class="form-error">&#9888; S&eacute;lectionne un lecteur avant de lancer un album</span>
+                <span class="form-error">&#9888; S&eacute;lectionne un lecteur pour voir la lecture en cours</span>
             {% endif %}
-            <button type="submit" name="refresh" value="1" formnovalidate class="refresh-button">Rafraîchir</button>
         </div>
     </form>
 
     <div class="main-layout">
 
         <div class="left-panel">
-            <div class="albums-grid">
-            {% for album in albums %}
-                <div class="album">
-                <div class="album-thumb">
-                    <img src="{{ lyrion_host }}/music/{{ album.artwork }}/cover.jpg"
-                         onerror="this.src='https://via.placeholder.com/200?text=No+Cover'">
-                    {% if selected_player %}
-                        <div class="album-overlay">
-                            <a class="play-button" href="/play/{{ album.id }}">&#9654;</a>
-                        </div>
-                    {% endif %}
+            <div class="now-playing" id="now-playing">
+                <div class="np-cover">
+                    <img id="np-cover-img" alt="Pochette"
+                         onerror="this.src='https://via.placeholder.com/300?text=No+Cover'">
                 </div>
-                <p><b>{{ album.title }}</b><br>{{ album.artist }}</p>
-            </div>
-            {% endfor %}
+                <div class="np-info">
+                    <p class="np-title" id="np-title">—</p>
+                    <p class="np-artist" id="np-artist"></p>
+                    <p class="np-album" id="np-album"></p>
+                    <div class="np-lyrics" id="np-lyrics"></div>
+                </div>
             </div>
         </div>
 
@@ -195,6 +190,58 @@
                 }
             });
         });
+
+        var LYRION_HOST = document.body.dataset.lyrionHost || '';
+        var hasPlayer = {{ 'true' if selected_player else 'false' }};
+
+        var el = {
+            title:  document.getElementById('np-title'),
+            artist: document.getElementById('np-artist'),
+            album:  document.getElementById('np-album'),
+            lyrics: document.getElementById('np-lyrics'),
+            cover:  document.getElementById('np-cover-img'),
+        };
+        var lastTrackId = null;
+
+        function render(data) {
+            if (!data || data.error === 'no_player' || !data.track_id) {
+                el.title.textContent = 'Rien en lecture';
+                el.artist.textContent = '';
+                el.album.textContent = '';
+                el.lyrics.textContent = '';
+                el.cover.removeAttribute('src');
+                lastTrackId = null;
+                return;
+            }
+
+            el.title.textContent = data.title || '';
+            el.artist.textContent = data.artist || '';
+            el.album.textContent = data.album || '';
+
+            // Only repaint cover + lyrics when the track actually changes,
+            // so polling doesn't flicker the image or reset lyric scroll.
+            if (data.track_id !== lastTrackId) {
+                lastTrackId = data.track_id;
+                el.cover.src = LYRION_HOST + '/music/' + (data.coverid || 0) + '/cover.jpg';
+                el.lyrics.textContent = data.lyrics || 'Pas de paroles';
+                el.lyrics.classList.toggle('empty', !data.lyrics);
+            }
+        }
+
+        function poll() {
+            if (!hasPlayer) { return; }
+            fetch('/now-playing.json')
+                .then(function(r) { return r.json(); })
+                .then(render)
+                .catch(function() { /* keep last render on transient errors */ });
+        }
+
+        if (hasPlayer) {
+            poll();
+            setInterval(poll, 5000);
+        } else {
+            render(null);
+        }
     </script>
 </body>
 </html>

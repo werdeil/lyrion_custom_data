@@ -4,7 +4,7 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 
 ## Fonctionnalites
 
-- **Album Suggester** -- Propose 5 albums aléatoires depuis la bibliothèque avec pochettes, et permet de les lancer sur un lecteur via l'API JSON-RPC de Lyrion.
+- **Now Playing** -- Affiche la piste en cours d'un lecteur (pochette, titre, artiste, album) et ses paroles, rafraîchi automatiquement via l'API JSON-RPC de Lyrion.
 - **Statistiques de la bibliotheque** -- Albums, artistes, morceaux joués/non joués, genres, notes, paroles, velocite d'ecoute sur 30 jours.
 - **Serveur de fichiers** -- Sert les fichiers depuis un repertoire configurable.
 
@@ -17,13 +17,13 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 ├── docker-compose.yml     # Déploiement via Docker
 ├── .env.example           # Modèle de configuration
 ├── routes/
-│   ├── suggester.py       # Routes : /  et  /play/<id>
+│   ├── nowplaying.py      # Routes : /  et  /now-playing.json
 │   └── custom.py          # Routes : /files/<path>
 ├── services/
 │   ├── lyrion.py          # Client JSON-RPC Lyrion
-│   └── database.py        # Accès SQLite (albums, stats)
+│   └── database.py        # Accès SQLite (paroles, stats)
 └── templates/
-    └── suggester.html     # Dashboard principal
+    └── nowplaying.html    # Dashboard principal
 ```
 
 ## Pre-requis
@@ -82,6 +82,6 @@ L'application est accessible sur `http://localhost:1111`.
 
 | Methode | Route | Description |
 |---|---|---|
-| GET/POST | `/` | Dashboard principal (suggestion d'albums + stats) |
-| GET | `/play/<album_id>` | Lance un album sur le player selectionné |
+| GET/POST | `/` | Dashboard principal (now playing + stats) |
+| GET | `/now-playing.json` | État live de la piste en cours du lecteur sélectionné (JSON) |
 | GET | `/files/<path>` | Sert un fichier depuis le répertoire custom data |

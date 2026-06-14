@@ -26,13 +26,35 @@ def get_players():
     return data["result"].get("players_loop", [])
 
 
-def play_album(player_id, album_id):
+def get_now_playing(player_id):
+    """Return the current track + transport state of a player.
+
+    Uses the JSON-RPC `status` query for the current playlist position (`-`),
+    asking for one item with the tags we display: a=artist, l=album,
+    d=duration, c=coverid. Title and the Lyrion track id come back by default;
+    that id is the key used to look up lyrics in the SQLite `tracks` table.
+    """
     payload = {
         "id": 1,
         "method": "slim.request",
-        "params": [
-            player_id,
-            ["playlistcontrol", "cmd:load", f"album_id:{album_id}"],
-        ],
+        "params": [player_id, ["status", "-", 1, "tags:aldc"]],
     }
-    lyrion_request(payload)
+    data = lyrion_request(payload)
+    result = data.get("result", {})
+    loop = result.get("playlist_loop") or []
+    track = loop[0] if loop else None
+
+    if not track:
+        return {"playing": False, "mode": result.get("mode", "stop")}
+
+    return {
+        "playing": result.get("mode") == "play",
+        "mode": result.get("mode", "stop"),
+        "time": result.get("time"),
+        "duration": result.get("duration") or track.get("duration"),
+        "track_id": track.get("id"),
+        "title": track.get("title"),
+        "artist": track.get("artist"),
+        "album": track.get("album"),
+        "coverid": track.get("coverid") or track.get("artwork_track_id") or track.get("id"),
+    }

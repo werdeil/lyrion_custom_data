@@ -1,7 +1,7 @@
 from flask import Flask
 
 from config import Config
-from routes.suggester import suggester_bp
+from routes.nowplaying import nowplaying_bp
 from routes.custom import custom_bp
 from services.database import get_stats
 
@@ -25,7 +25,7 @@ def create_app():
         return json_text
 
     # Register blueprints
-    app.register_blueprint(suggester_bp)
+    app.register_blueprint(nowplaying_bp)
     app.register_blueprint(custom_bp)
 
     return app

@@ -22,43 +22,20 @@ def get_db_conn():
         conn.close()
 
 
-def get_albums():
-    with get_db_conn() as conn:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT albums.id,
-                   albums.title,
-                   contributors.name AS artist,
-                   albums.artwork
-            FROM albums
-            JOIN contributors ON albums.contributor = contributors.id
-            ORDER BY RANDOM()
-            LIMIT 5
-        """)
-        return cur.fetchall()
-
-
-def get_albums_by_ids(album_ids):
-    if not album_ids:
-        return []
+def get_track_lyrics(track_id):
+    """Return the stored lyrics for a Lyrion track id, or None if absent."""
+    if not track_id:
+        return None
 
     with get_db_conn() as conn:
-        cur = conn.cursor()
-        placeholders = ",".join("?" for _ in album_ids)
-        order_case = " ".join(f"WHEN albums.id=? THEN {idx}" for idx, _ in enumerate(album_ids))
-        query = f"""
-            SELECT albums.id,
-                   albums.title,
-                   contributors.name AS artist,
-                   albums.artwork
-            FROM albums
-            JOIN contributors ON albums.contributor = contributors.id
-            WHERE albums.id IN ({placeholders})
-            ORDER BY CASE {order_case} END
-        """
-        params = [*album_ids, *album_ids]
-        cur.execute(query, params)
-        return cur.fetchall()
+        row = conn.execute(
+            "SELECT lyrics FROM tracks WHERE id = ?",
+            (track_id,),
+        ).fetchone()
+
+    if row and row["lyrics"]:
+        return row["lyrics"]
+    return None
 
 
 def get_stats():
