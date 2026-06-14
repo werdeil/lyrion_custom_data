@@ -260,6 +260,16 @@ hr {
     font-style: italic;
 }
 
+.np-lyrics-source {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: #6f8bb1;
+}
+
+.np-lyrics-source:empty {
+    display: none;
+}
+
 .np-fetch-lyrics {
     margin-top: 12px;
     font-size: 0.9rem;

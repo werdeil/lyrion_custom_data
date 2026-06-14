@@ -31,6 +31,7 @@
                     <p class="np-artist" id="np-artist"></p>
                     <p class="np-album" id="np-album"></p>
                     <div class="np-lyrics" id="np-lyrics"></div>
+                    <p class="np-lyrics-source" id="np-lyrics-source"></p>
                     <button class="np-fetch-lyrics" id="np-fetch-lyrics" type="button">
                         &#128269; Chercher les paroles sur le web
                     </button>
@@ -188,6 +189,7 @@
             artist: document.getElementById('np-artist'),
             album:  document.getElementById('np-album'),
             lyrics: document.getElementById('np-lyrics'),
+            source: document.getElementById('np-lyrics-source'),
             cover:  document.getElementById('np-cover-img'),
             fetch:  document.getElementById('np-fetch-lyrics'),
         };
@@ -195,9 +197,22 @@
         var currentTrack = null;
         var lyricsTried = false;
 
+        // Friendly labels for the provider keys returned by /lyrics.json.
+        var SOURCE_LABELS = {
+            library:    'bibliothèque',
+            lrclib:     'LRCLIB',
+            musixmatch: 'Musixmatch',
+            genius:     'Genius',
+        };
+
         function setLyrics(text, isEmpty) {
             el.lyrics.textContent = text;
             el.lyrics.classList.toggle('empty', !!isEmpty);
+        }
+
+        function setLyricsSource(source) {
+            var label = source && SOURCE_LABELS[source];
+            el.source.textContent = label ? 'Source : ' + label : '';
         }
 
         function render(data) {
@@ -223,6 +238,7 @@
                 currentTrack = data;
                 el.cover.src = LYRION_HOST + '/music/' + (data.coverid || 0) + '/cover.jpg';
                 setLyrics(data.lyrics || 'Pas de paroles', !data.lyrics);
+                setLyricsSource(data.lyrics ? 'library' : null);
                 // Offer the web lookup only when the library has no lyrics.
                 el.fetch.style.display = data.lyrics ? 'none' : '';
                 el.fetch.disabled = false;
@@ -251,6 +267,7 @@
                     var lyrics = res.lyrics || res.synced;
                     if (lyrics) {
                         setLyrics(lyrics, false);
+                        setLyricsSource(res.source);
                         el.fetch.style.display = 'none';
                     } else {
                         setLyrics('Aucune parole trouvée sur le web', true);

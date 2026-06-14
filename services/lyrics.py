@@ -282,8 +282,8 @@ def fetch_lyrics(track_id, artist, title, album=None, duration=None, force=False
 
     Tries each enabled provider in order and keeps the first non-empty result.
     Returns a dict {"lyrics": str|None, "synced": str|None, "source": str}.
-    `source` is "cache" on a cache hit, the provider name on a fresh hit, or
-    "none" when nothing was found.
+    `source` is the winning provider name (kept across cache hits so the UI can
+    show where the lyrics came from), or "none" when nothing was found.
     """
     if not title or not artist:
         return {"lyrics": None, "synced": None, "source": "none"}
@@ -292,7 +292,7 @@ def fetch_lyrics(track_id, artist, title, album=None, duration=None, force=False
     if not force:
         cached = _cache_get(cache_key)
         if cached is not None:
-            return {**cached, "source": "cache"}
+            return dict(cached)
 
     result = {"lyrics": None, "synced": None, "source": "none"}
     for name, provider in _enabled_providers():
@@ -310,6 +310,5 @@ def fetch_lyrics(track_id, artist, title, album=None, duration=None, force=False
             break
 
     found = bool(result["lyrics"] or result["synced"])
-    _cache_set(cache_key, {"lyrics": result["lyrics"], "synced": result["synced"]},
-               TTL_HIT if found else TTL_MISS)
+    _cache_set(cache_key, dict(result), TTL_HIT if found else TTL_MISS)
     return result
