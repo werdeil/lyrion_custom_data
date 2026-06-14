@@ -58,3 +58,25 @@ def get_now_playing(player_id):
         "album": track.get("album"),
         "coverid": track.get("coverid") or track.get("artwork_track_id") or track.get("id"),
     }
+
+
+def get_active_now_playing():
+    """Now-playing state of the player that is currently playing.
+
+    Lyrion has no single call returning the transport state of every player,
+    so we enumerate players and query `status` on each, returning the first one
+    whose mode is 'play'. If none is actually playing, we return a not-playing
+    payload so the page shows its empty state — a paused/stopped player with a
+    track still loaded is deliberately not surfaced.
+    """
+    for player in get_players():
+        player_id = player.get("playerid")
+        if not player_id:
+            continue
+
+        now = get_now_playing(player_id)
+        if now.get("playing") and now.get("track_id"):
+            now["player_name"] = player.get("name")
+            return now
+
+    return {"playing": False, "mode": "stop", "player_name": None}

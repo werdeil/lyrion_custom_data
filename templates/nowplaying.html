@@ -17,39 +17,24 @@
         </a>
     </div>
 
-    <form method="POST" class="top-form">
-        <div class="form-row">
-            <label class="form-label">Lecteur :</label>
-            <select name="player_id" required onchange="this.form.submit()">
-                {% if not selected_player %}
-                    <option value="" disabled selected>Choisir un lecteur</option>
-                {% endif %}
-                {% for p in players %}
-                    <option value="{{ p.playerid }}"
-                        {% if p.playerid == selected_player %}selected{% endif %}>
-                        {{ p.name }}
-                    </option>
-                {% endfor %}
-            </select>
-            {% if not selected_player %}
-                <span class="form-error">&#9888; S&eacute;lectionne un lecteur pour voir la lecture en cours</span>
-            {% endif %}
-        </div>
-    </form>
-
     <div class="main-layout">
 
         <div class="left-panel">
-            <div class="now-playing" id="now-playing">
+            <div class="now-playing is-empty" id="now-playing">
                 <div class="np-cover">
                     <img id="np-cover-img" alt="Pochette"
                          onerror="this.src='https://via.placeholder.com/300?text=No+Cover'">
                 </div>
                 <div class="np-info">
+                    <p class="np-player" id="np-player"></p>
                     <p class="np-title" id="np-title">—</p>
                     <p class="np-artist" id="np-artist"></p>
                     <p class="np-album" id="np-album"></p>
                     <div class="np-lyrics" id="np-lyrics"></div>
+                </div>
+                <div class="np-empty" id="np-empty">
+                    <span class="np-empty-icon">&#9835;</span>
+                    <p class="np-empty-text">Aucune lecture en cours</p>
                 </div>
             </div>
         </div>
@@ -192,9 +177,10 @@
         });
 
         var LYRION_HOST = document.body.dataset.lyrionHost || '';
-        var hasPlayer = {{ 'true' if selected_player else 'false' }};
 
+        var nowPlaying = document.getElementById('now-playing');
         var el = {
+            player: document.getElementById('np-player'),
             title:  document.getElementById('np-title'),
             artist: document.getElementById('np-artist'),
             album:  document.getElementById('np-album'),
@@ -204,16 +190,16 @@
         var lastTrackId = null;
 
         function render(data) {
-            if (!data || data.error === 'no_player' || !data.track_id) {
-                el.title.textContent = 'Rien en lecture';
-                el.artist.textContent = '';
-                el.album.textContent = '';
-                el.lyrics.textContent = '';
+            if (!data || !data.track_id) {
+                nowPlaying.classList.add('is-empty');
+                el.player.textContent = '';
                 el.cover.removeAttribute('src');
                 lastTrackId = null;
                 return;
             }
 
+            nowPlaying.classList.remove('is-empty');
+            el.player.textContent = data.player_name || '';
             el.title.textContent = data.title || '';
             el.artist.textContent = data.artist || '';
             el.album.textContent = data.album || '';
@@ -229,19 +215,14 @@
         }
 
         function poll() {
-            if (!hasPlayer) { return; }
             fetch('/now-playing.json')
                 .then(function(r) { return r.json(); })
                 .then(render)
                 .catch(function() { /* keep last render on transient errors */ });
         }
 
-        if (hasPlayer) {
-            poll();
-            setInterval(poll, 5000);
-        } else {
-            render(null);
-        }
+        poll();
+        setInterval(poll, 5000);
     </script>
 </body>
 </html>

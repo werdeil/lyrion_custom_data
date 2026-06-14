@@ -50,27 +50,6 @@ button:hover {
     filter: brightness(1.05);
 }
 
-.form-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.form-error {
-    color: #ff7d87;
-    white-space: nowrap;
-    font-size: 0.95rem;
-}
-
-select {
-    padding: 5px;
-    background: #18263d;
-    color: #e5eff9;
-    border: 1px solid #2b4a75;
-    border-radius: 4px;
-}
-
 hr {
     border-color: #2a3b5a;
     margin: 16px 0;
@@ -252,6 +231,18 @@ hr {
     color: #9bb3d7;
 }
 
+.np-player {
+    margin: 0 0 4px 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8fa8c8;
+}
+
+.np-player:empty {
+    display: none;
+}
+
 .np-lyrics {
     margin-top: 16px;
     max-height: 420px;
@@ -267,6 +258,37 @@ hr {
 .np-lyrics.empty {
     color: #6f8bb1;
     font-style: italic;
+}
+
+.np-empty {
+    display: none;
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 220px;
+    color: #6f8bb1;
+}
+
+.np-empty-icon {
+    font-size: 3rem;
+    opacity: 0.6;
+}
+
+.np-empty-text {
+    margin: 0;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+}
+
+.now-playing.is-empty .np-cover,
+.now-playing.is-empty .np-info {
+    display: none;
+}
+
+.now-playing.is-empty .np-empty {
+    display: flex;
 }
 
 .page-logo {
@@ -306,14 +328,6 @@ hr {
     flex-wrap: wrap;
     gap: 0.75rem;
     margin-bottom: 20px;
-}
-
-.top-form {
-    margin-bottom: 16px;
-}
-
-.form-label {
-    white-space: nowrap;
 }
 
 .runner-card {
@@ -359,9 +373,6 @@ hr {
     .stats-panel {
         width: 100%;
     }
-    .form-row {
-        justify-content: stretch;
-    }
 }
 
 @media (max-width: 540px) {
@@ -371,8 +382,5 @@ hr {
     .np-cover {
         flex-basis: 100%;
         max-width: none;
-    }
-    .form-error {
-        white-space: normal;
     }
 }

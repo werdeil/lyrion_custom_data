@@ -4,7 +4,7 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 
 ## Fonctionnalites
 
-- **Now Playing** -- Affiche la piste en cours d'un lecteur (pochette, titre, artiste, album) et ses paroles, rafraîchi automatiquement via l'API JSON-RPC de Lyrion.
+- **Now Playing** -- Détecte automatiquement le lecteur en cours de lecture et affiche sa piste (pochette, titre, artiste, album) et ses paroles, rafraîchi via l'API JSON-RPC de Lyrion.
 - **Statistiques de la bibliotheque** -- Albums, artistes, morceaux joués/non joués, genres, notes, paroles, velocite d'ecoute sur 30 jours.
 - **Serveur de fichiers** -- Sert les fichiers depuis un repertoire configurable.
 
@@ -82,6 +82,6 @@ L'application est accessible sur `http://localhost:1111`.
 
 | Methode | Route | Description |
 |---|---|---|
-| GET/POST | `/` | Dashboard principal (now playing + stats) |
-| GET | `/now-playing.json` | État live de la piste en cours du lecteur sélectionné (JSON) |
+| GET | `/` | Dashboard principal (now playing + stats) |
+| GET | `/now-playing.json` | État live de la piste du lecteur en cours de lecture, détecté automatiquement (JSON) |
 | GET | `/files/<path>` | Sert un fichier depuis le répertoire custom data |
