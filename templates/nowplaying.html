@@ -48,23 +48,23 @@
             <div class="stat-group">
                 <div class="stat-group-title">
                     <span class="stat-group-title-label">&#127925; Albums</span>
-                    <span class="stat-group-total">{{ stats.albums_total }}</span>
+                    <span class="stat-group-total" data-stat="albums_total">{{ stats.albums_total }}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Total</span>
-                    <span class="stat-value">{{ stats.albums_total }}</span>
+                    <span class="stat-value" data-stat="albums_total">{{ stats.albums_total }}</span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Fully played</span>
-                    <span>{{ stats.albums_played }} <small>({{ stats.albums_played_pct }}%)</small></span>
+                    <span data-stat="albums_played" data-stat-pct="albums_played_pct">{{ stats.albums_played }} <small>({{ stats.albums_played_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Not fully played</span>
-                    <span>{{ stats.albums_not_fully }} <small>({{ stats.albums_not_fully_pct }}%)</small></span>
+                    <span data-stat="albums_not_fully" data-stat-pct="albums_not_fully_pct">{{ stats.albums_not_fully }} <small>({{ stats.albums_not_fully_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Never played</span>
-                    <span>{{ stats.albums_never }} <small>({{ stats.albums_never_pct }}%)</small></span>
+                    <span data-stat="albums_never" data-stat-pct="albums_never_pct">{{ stats.albums_never }} <small>({{ stats.albums_never_pct }}%)</small></span>
                 </div>
             </div>
 
@@ -72,23 +72,23 @@
             <div class="stat-group">
                 <div class="stat-group-title">
                     <span class="stat-group-title-label">&#127908; Album Artists</span>
-                    <span class="stat-group-total">{{ stats.artists_total }}</span>
+                    <span class="stat-group-total" data-stat="artists_total">{{ stats.artists_total }}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Total</span>
-                    <span class="stat-value">{{ stats.artists_total }}</span>
+                    <span class="stat-value" data-stat="artists_total">{{ stats.artists_total }}</span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Fully played</span>
-                    <span>{{ stats.artists_played }} <small>({{ stats.artists_played_pct }}%)</small></span>
+                    <span data-stat="artists_played" data-stat-pct="artists_played_pct">{{ stats.artists_played }} <small>({{ stats.artists_played_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Partially played</span>
-                    <span>{{ stats.artists_partial }} <small>({{ stats.artists_partial_pct }}%)</small></span>
+                    <span data-stat="artists_partial" data-stat-pct="artists_partial_pct">{{ stats.artists_partial }} <small>({{ stats.artists_partial_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Never played</span>
-                    <span>{{ stats.artists_unplayed }} <small>({{ stats.artists_unplayed_pct }}%)</small></span>
+                    <span data-stat="artists_unplayed" data-stat-pct="artists_unplayed_pct">{{ stats.artists_unplayed }} <small>({{ stats.artists_unplayed_pct }}%)</small></span>
                 </div>
             </div>
 
@@ -96,23 +96,23 @@
             <div class="stat-group">
                 <div class="stat-group-title">
                     <span class="stat-group-title-label">&#127917; Track Artists</span>
-                    <span class="stat-group-total">{{ stats.track_artists_total }}</span>
+                    <span class="stat-group-total" data-stat="track_artists_total">{{ stats.track_artists_total }}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Total</span>
-                    <span class="stat-value">{{ stats.track_artists_total }}</span>
+                    <span class="stat-value" data-stat="track_artists_total">{{ stats.track_artists_total }}</span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Fully played</span>
-                    <span>{{ stats.track_artists_fully_played }} <small>({{ stats.track_artists_fully_played_pct }}%)</small></span>
+                    <span data-stat="track_artists_fully_played" data-stat-pct="track_artists_fully_played_pct">{{ stats.track_artists_fully_played }} <small>({{ stats.track_artists_fully_played_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Partially played</span>
-                    <span>{{ stats.track_artists_partially_played }} <small>({{ stats.track_artists_partially_played_pct }}%)</small></span>
+                    <span data-stat="track_artists_partially_played" data-stat-pct="track_artists_partially_played_pct">{{ stats.track_artists_partially_played }} <small>({{ stats.track_artists_partially_played_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Never played</span>
-                    <span>{{ stats.track_artists_unplayed }} <small>({{ stats.track_artists_unplayed_pct }}%)</small></span>
+                    <span data-stat="track_artists_unplayed" data-stat-pct="track_artists_unplayed_pct">{{ stats.track_artists_unplayed }} <small>({{ stats.track_artists_unplayed_pct }}%)</small></span>
                 </div>
             </div>
 
@@ -120,23 +120,23 @@
             <div class="stat-group">
                 <div class="stat-group-title">
                     <span class="stat-group-title-label">&#127926; Morceaux</span>
-                    <span class="stat-group-total">{{ stats.songs_total }}</span>
+                    <span class="stat-group-total" data-stat="songs_total">{{ stats.songs_total }}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Total</span>
-                    <span class="stat-value">{{ stats.songs_total }}</span>
+                    <span class="stat-value" data-stat="songs_total">{{ stats.songs_total }}</span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Played</span>
-                    <span>{{ stats.songs_played_apc }} <small>({{ stats.songs_played_pct }}%)</small></span>
+                    <span data-stat="songs_played_apc" data-stat-pct="songs_played_pct">{{ stats.songs_played_apc }} <small>({{ stats.songs_played_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Unplayed</span>
-                    <span>{{ stats.songs_unplayed_apc }} <small>({{ stats.songs_unplayed_apc_pct }}%)</small></span>
+                    <span data-stat="songs_unplayed_apc" data-stat-pct="songs_unplayed_apc_pct">{{ stats.songs_unplayed_apc }} <small>({{ stats.songs_unplayed_apc_pct }}%)</small></span>
                 </div>
                 <div class="stat-row sub">
                     <span class="stat-label">Total plays</span>
-                    <span class="stat-value">{{ stats.songs_total_plays_apc }}</span>
+                    <span class="stat-value" data-stat="songs_total_plays_apc">{{ stats.songs_total_plays_apc }}</span>
                 </div>
             </div>
 
@@ -147,23 +147,23 @@
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Genres</span>
-                    <span class="stat-value">{{ stats.genres }}</span>
+                    <span class="stat-value" data-stat="genres">{{ stats.genres }}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Rated songs</span>
-                    <span>{{ stats.rated_songs }} <small>({{ stats.rated_songs_pct }}%)</small></span>
+                    <span data-stat="rated_songs" data-stat-pct="rated_songs_pct">{{ stats.rated_songs }} <small>({{ stats.rated_songs_pct }}%)</small></span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">With lyrics</span>
-                    <span>{{ stats.songs_with_lyrics }} <small>({{ stats.songs_with_lyrics_pct }}%)</small></span>
+                    <span data-stat="songs_with_lyrics" data-stat-pct="songs_with_lyrics_pct">{{ stats.songs_with_lyrics }} <small>({{ stats.songs_with_lyrics_pct }}%)</small></span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Played last 30d</span>
-                    <span class="stat-value">{{ stats.velocity_30d }}</span>
+                    <span class="stat-value" data-stat="velocity_30d">{{ stats.velocity_30d }}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Played last year</span>
-                    <span class="stat-value">{{ stats.velocity_1year }}</span>
+                    <span class="stat-value" data-stat="velocity_1year">{{ stats.velocity_1year }}</span>
                 </div>
             </div>
         </div>
@@ -271,8 +271,32 @@
                 .catch(function() { /* keep last render on transient errors */ });
         }
 
+        // Stats change only when playcounts move, so refresh them less often
+        // than now-playing. Elements carry data-stat (and optional data-stat-pct)
+        // so we update text in place without reloading the page.
+        function renderStats(stats) {
+            document.querySelectorAll('[data-stat]').forEach(function(el) {
+                var value = stats[el.dataset.stat];
+                if (value === undefined) { return; }
+                var pctKey = el.dataset.statPct;
+                if (pctKey) {
+                    el.innerHTML = value + ' <small>(' + stats[pctKey] + '%)</small>';
+                } else {
+                    el.textContent = value;
+                }
+            });
+        }
+
+        function pollStats() {
+            fetch('/stats.json')
+                .then(function(r) { return r.json(); })
+                .then(renderStats)
+                .catch(function() { /* keep last render on transient errors */ });
+        }
+
         poll();
         setInterval(poll, 5000);
+        setInterval(pollStats, 60000);
     </script>
 </body>
 </html>
