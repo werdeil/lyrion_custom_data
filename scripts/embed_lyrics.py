@@ -10,6 +10,12 @@ Usage:
     python scripts/embed_lyrics.py /path/to/music [--dry-run] [--force]
                                    [--delay 0.5] [--verbose]
 
+Several targets are accepted, and shell-style wildcards work even when quoted
+(or when the shell finds no match and passes the pattern through literally):
+    python scripts/embed_lyrics.py /path/to/music/A*
+    python scripts/embed_lyrics.py "/path/to/music/A*" /path/to/music/B*
+Each target may be a directory (scanned recursively) or a single music file.
+
 Config is read from the repo-root .env automatically (if python-dotenv is
 installed), so the CLI honors the same settings as the web app without needing
 `source .env`. Provider order comes from LYRICS_PROVIDERS (defaults to
@@ -18,6 +24,7 @@ raise it for big batches when LRCLIB is slow under load.
 """
 
 import argparse
+import glob
 import os
 import sys
 import time
@@ -41,20 +48,63 @@ from services.lyrics import fetch_lyrics  # noqa: E402
 from services import tags  # noqa: E402
 
 
-def iter_music_files(root):
-    """Yield every music file under `root`, recursively, in stable order."""
-    for dirpath, _dirs, files in os.walk(root):
-        for name in sorted(files):
-            path = os.path.join(dirpath, name)
-            if tags.is_music_file(path):
-                yield path
+def resolve_targets(patterns):
+    """Expand CLI arguments into an ordered, de-duplicated list of paths.
+
+    Patterns the shell already expanded arrive as plain paths; literal
+    patterns (quoted, or left untouched because the shell found no match) are
+    expanded here so `A*` works either way. Returns (paths, missing) where
+    `missing` is the wildcard patterns that matched nothing — reported, not
+    fatal, so a partial batch still runs.
+    """
+    paths, missing, seen = [], [], set()
+    for pattern in patterns:
+        if glob.has_magic(pattern):
+            matches = sorted(glob.glob(pattern))
+            if not matches:
+                missing.append(pattern)
+                continue
+        else:
+            matches = [pattern]
+        for match in matches:
+            if match not in seen:
+                seen.add(match)
+                paths.append(match)
+    return paths, missing
+
+
+def iter_music_files(targets):
+    """Yield (path, rel) for every music file in `targets`, in stable order.
+
+    Each target is a directory (walked) or a single music file (yielded as-is).
+    `rel` is the path shown in logs: it stays relative to the target's parent so
+    the matched folder name is kept (readable even when several targets match a
+    wildcard), without the `../../` noise of a cwd-relative path.
+    """
+    for target in targets:
+        base = os.path.dirname(os.path.normpath(target))
+        if os.path.isdir(target):
+            for dirpath, _dirs, files in os.walk(target):
+                for name in sorted(files):
+                    path = os.path.join(dirpath, name)
+                    if tags.is_music_file(path):
+                        yield path, os.path.relpath(path, base)
+        elif os.path.isfile(target):
+            if tags.is_music_file(target):
+                yield target, os.path.relpath(target, base)
+        else:
+            print(f"warning: not a file or directory: {target}", file=sys.stderr)
 
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Embed web lyrics into the tags of music files in a folder."
     )
-    parser.add_argument("folder", help="Directory to scan recursively.")
+    parser.add_argument(
+        "targets", nargs="+",
+        help="Directories or files to process. Shell-style wildcards (e.g. "
+             "A*) are accepted, even quoted.",
+    )
     parser.add_argument(
         "--delay", type=float, default=0.5,
         help="Seconds to wait between web lookups, to stay polite (default 0.5).",
@@ -76,8 +126,11 @@ def parse_args(argv):
 
 def main(argv=None):
     args = parse_args(argv)
-    if not os.path.isdir(args.folder):
-        print(f"error: not a directory: {args.folder}", file=sys.stderr)
+    targets, missing = resolve_targets(args.targets)
+    for pattern in missing:
+        print(f"warning: no match for pattern: {pattern}", file=sys.stderr)
+    if not targets:
+        print("error: no existing file or directory to process", file=sys.stderr)
         return 2
 
     counts = {
@@ -85,9 +138,8 @@ def main(argv=None):
         "not_found": 0, "no_meta": 0, "failed": 0,
     }
 
-    for path in iter_music_files(args.folder):
+    for path, rel in iter_music_files(targets):
         counts["scanned"] += 1
-        rel = os.path.relpath(path, args.folder)
 
         meta = tags.read_metadata(path)
         if not meta or not meta.get("artist") or not meta.get("title"):
