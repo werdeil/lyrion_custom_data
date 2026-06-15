@@ -36,6 +36,11 @@ BROWSER_UA = (
 TTL_HIT = 24 * 3600
 TTL_MISS = 3600
 
+# LRCLIB can get slow under load (8-10s response times on busy evenings), which
+# silently turned every fetch into a timeout. Give it a generous, configurable
+# budget since this is a user-initiated fallback, not a hot path.
+LRCLIB_TIMEOUT = int(os.getenv("LRCLIB_TIMEOUT", "15"))
+
 _cache = {}
 _cache_lock = threading.Lock()
 
@@ -89,7 +94,7 @@ def _provider_lrclib(artist, title, album, duration):
 
     payload = None
     try:
-        r = requests.get(f"{LRCLIB_BASE}/get", params=params, headers=headers, timeout=5)
+        r = requests.get(f"{LRCLIB_BASE}/get", params=params, headers=headers, timeout=LRCLIB_TIMEOUT)
         if r.status_code == 200:
             payload = r.json()
     except requests.RequestException:
@@ -101,7 +106,7 @@ def _provider_lrclib(artist, title, album, duration):
                 f"{LRCLIB_BASE}/search",
                 params={"artist_name": artist, "track_name": title},
                 headers=headers,
-                timeout=5,
+                timeout=LRCLIB_TIMEOUT,
             )
             if r.status_code == 200:
                 results = r.json()

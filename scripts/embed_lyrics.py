@@ -10,8 +10,11 @@ Usage:
     python scripts/embed_lyrics.py /path/to/music [--dry-run] [--force]
                                    [--delay 0.5] [--verbose]
 
-Provider order is taken from the LYRICS_PROVIDERS env var, exactly like the
-web app (defaults to lrclib,musixmatch,genius).
+Config is read from the repo-root .env automatically (if python-dotenv is
+installed), so the CLI honors the same settings as the web app without needing
+`source .env`. Provider order comes from LYRICS_PROVIDERS (defaults to
+lrclib,musixmatch,genius); LRCLIB_TIMEOUT (seconds, default 15) is honored too —
+raise it for big batches when LRCLIB is slow under load.
 """
 
 import argparse
@@ -21,7 +24,18 @@ import time
 
 # Allow running both as a script (python scripts/embed_lyrics.py) and as a
 # module (python -m scripts.embed_lyrics) by putting the repo root on the path.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
+# Load .env so the CLI honors the same config as the web app (LYRICS_PROVIDERS,
+# LRCLIB_TIMEOUT, ...) without needing `source .env`. This must run before
+# importing services.lyrics, whose timeout constant is read at import time.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(os.path.join(ROOT, ".env"))
+except ImportError:  # python-dotenv is optional; fall back to the real env.
+    pass
 
 from services.lyrics import fetch_lyrics  # noqa: E402
 from services import tags  # noqa: E402
