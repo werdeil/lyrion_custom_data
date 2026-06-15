@@ -210,6 +210,8 @@
         function setLyrics(text, isEmpty) {
             el.lyrics.textContent = text;
             el.lyrics.classList.toggle('empty', !!isEmpty);
+            // Reset scroll so a new track's lyrics start from the top.
+            el.lyrics.scrollTop = 0;
         }
 
         function setLyricsSource(source) {

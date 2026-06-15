@@ -68,7 +68,7 @@ hr {
 }
 
 .stats-panel {
-    width: 260px;
+    width: 320px;
     flex-shrink: 0;
     background: #141d2e;
     border-radius: 10px;
@@ -393,6 +393,55 @@ hr {
 .status.error {
     background: rgba(255, 125, 135, 0.12);
     color: #ffb7c0;
+}
+
+/* On desktop, let the now-playing card fill the viewport height so the
+   lyrics area expands instead of leaving empty space below. */
+@media (min-width: 861px) {
+    body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+    .main-layout {
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: stretch;
+        /* wrap would let the flex line grow to content height, breaking the
+           viewport-height constraint; both panels fit side by side here. */
+        flex-wrap: nowrap;
+    }
+    .left-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .now-playing {
+        flex: 1 1 auto;
+        min-height: 0;
+        grid-template-rows: auto 1fr;
+        overflow: hidden;
+    }
+    .np-lyrics-block {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        /* now-playing uses align-items:start; stretch this block so it fills
+           its grid row and the lyrics can scroll instead of overflowing. */
+        align-self: stretch;
+    }
+    .np-lyrics {
+        flex: 1 1 auto;
+        max-height: none;
+        min-height: 0;
+    }
+    /* If the stats list is taller than the screen, scroll it internally
+       instead of pushing the now-playing card past the viewport. */
+    .stats-panel {
+        min-height: 0;
+        overflow-y: auto;
+    }
 }
 
 @media (max-width: 860px) {
