@@ -16,6 +16,7 @@ services:
       - CUSTOM_DATA_DIR=${CUSTOM_DATA_DIR:-/opt/scripts/custom_data}
       - LYRICS_PROVIDERS=${LYRICS_PROVIDERS:-lrclib,musixmatch,genius}
       - MUSIXMATCH_TOKEN=${MUSIXMATCH_TOKEN:-}
+      - DEV=${DEV:-}
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import os, urllib.request as u; u.urlopen(f\"http://127.0.0.1:1111/health\")'"
       ]
