@@ -2,18 +2,12 @@
     box-sizing: border-box;
 }
 
-/* --tint-color is driven from JS: a neutral grey-blue when nothing is playing,
-   the dominant colour of the current cover otherwise. Registering it as a
-   <color> lets the background fade smoothly between tracks instead of jumping. */
 @property --tint-color {
     syntax: "<color>";
     inherits: true;
     initial-value: #8b94a8;
 }
 
-/* --accent-color drives the UI accents (progress bar, artist, stat values).
-   It defaults to a soft blue and is overridden in JS with a brighter,
-   more saturated take on the current cover so it stays legible on the dark UI. */
 @property --accent-color {
     syntax: "<color>";
     inherits: true;
@@ -184,9 +178,6 @@ hr {
     font-size: 0.8rem;
 }
 
-/* Second-level breakdown rows whose count is zero are dimmed (not hidden, so
-   the group keeps its structure and a meaningful "0"). Toggled in JS,
-   re-evaluated on each stats refresh. */
 .stat-row.sub.is-zero {
     opacity: 0.4;
 }
@@ -300,8 +291,6 @@ hr {
     border-radius: 2px;
     background: #2c4160;
     overflow: hidden;
-    /* On desktop the lyrics block is a column flexbox; without this the 3px
-       bar gets squashed when long lyrics overflow and the flex shrinks items. */
     flex-shrink: 0;
 }
 
@@ -332,6 +321,7 @@ hr {
     margin-top: 6px;
     font-size: 0.78rem;
     color: #6f8bb1;
+    flex-shrink: 0;
 }
 
 .np-lyrics-source:empty {
@@ -341,6 +331,7 @@ hr {
 .np-fetch-lyrics {
     margin-top: 12px;
     font-size: 0.9rem;
+    flex-shrink: 0;
 }
 
 .np-fetch-lyrics:disabled {
@@ -456,8 +447,6 @@ hr {
     color: #ffb7c0;
 }
 
-/* On desktop, let the now-playing card fill the viewport height so the
-   lyrics area expands instead of leaving empty space below. */
 @media (min-width: 861px) {
     body {
         display: flex;
@@ -469,8 +458,6 @@ hr {
         flex: 1 1 auto;
         min-height: 0;
         align-items: stretch;
-        /* wrap would let the flex line grow to content height, breaking the
-           viewport-height constraint; both panels fit side by side here. */
         flex-wrap: nowrap;
     }
     .left-panel {
@@ -488,8 +475,6 @@ hr {
         display: flex;
         flex-direction: column;
         min-height: 0;
-        /* now-playing uses align-items:start; stretch this block so it fills
-           its grid row and the lyrics can scroll instead of overflowing. */
         align-self: stretch;
     }
     .np-lyrics {
@@ -497,14 +482,9 @@ hr {
         max-height: none;
         min-height: 0;
     }
-    /* When there are no lyrics, don't let the placeholder stretch to fill the
-       card — otherwise the "search lyrics" button gets pushed to the bottom,
-       far from the "Pas de paroles" message. */
     .np-lyrics.empty {
         flex: 0 0 auto;
     }
-    /* If the stats list is taller than the screen, scroll it internally
-       instead of pushing the now-playing card past the viewport. */
     .stats-panel {
         min-height: 0;
         overflow-y: auto;
@@ -524,7 +504,6 @@ hr {
     body {
         padding: 12px;
     }
-    /* Small cover + info on one row, lyrics full width underneath. */
     .now-playing {
         grid-template-columns: 120px 1fr;
         gap: 16px;

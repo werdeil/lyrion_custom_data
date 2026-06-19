@@ -1,6 +1,3 @@
-// UI strings for the dynamic (JS-rendered) bits, resolved server-side from the
-// browser language and embedded in the page as JSON. Static markup is
-// translated via Jinja in the template.
 var I18N = JSON.parse(document.getElementById('i18n-data').textContent);
 
 document.querySelectorAll('.stat-group-title').forEach(function(title) {
@@ -28,13 +25,6 @@ var el = {
     lyrionLink: document.getElementById('lyrion-link'),
 };
 
-// "Open in Lyrion" button. On desktop it opens the Material web skin,
-// deep-linked to the active player. On Android it opens the native LMS
-// Material app (com.craigd.lmsmaterial.app) via an intent URL, falling
-// back to the web skin when the app isn't installed.
-// NB: the native app loads its own configured server + default player,
-// so the ?player= hint only affects the web (skin / fallback), not the
-// app — there is no supported way to deep-link a player into the app.
 var MATERIAL_BASE = LYRION_HOST ? LYRION_HOST + '/material/' : '#';
 var IS_ANDROID = /Android/i.test(navigator.userAgent || '');
 var MATERIAL_APP_PKG = 'com.craigd.lmsmaterial.app';
@@ -48,19 +38,14 @@ function setLyrionLink(playerId) {
             ';S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
     } else {
         el.lyrionLink.href = web;
+        el.lyrionLink.target = 'lyrion';
     }
 }
 var lastTrackId = null;
 var currentTrack = null;
 var lyricsTried = false;
 
-// Background tint, Material-skin style: neutral grey-blue when idle,
-// the cover's dominant colour while playing. The cover is served
-// same-origin (via /cover/<id>.jpg) so we can read its pixels.
 var TINT_NEUTRAL = '#8b94a8';
-// Default accent for when there's no usable cover hue (idle screen,
-// greyscale covers, sampling failures): a soft Lyrion-like blue that
-// stays calm on the dark UI, matching Lyrion's current default.
 var ACCENT_DEFAULT = '#4f86c6';
 
 function setTint(color) {
@@ -93,8 +78,6 @@ function hslToRgb(h, s, l) {
         Math.round(hue(p, q, h - 1 / 3) * 255) + ')';
 }
 
-// Average the cover, then push saturation/lightness into a readable
-// mid-range so even muted artwork yields a visible — but not garish — tint.
 function sampleCoverTint() {
     try {
         var img = el.cover;
@@ -123,26 +106,18 @@ function sampleCoverTint() {
             else { h = (r - g) / dd + 4; }
             h /= 6;
         }
-        // Background tint: muted mid-range so it stays a backdrop.
         setTint(hslToRgb(h, Math.min(1, Math.max(sat, 0.45)),
                             Math.min(0.62, Math.max(0.42, l))));
-        // Accents: brighter and more saturated to stay legible on the
-        // dark UI. A near-greyscale cover has no meaningful hue, so we
-        // fall back to the default blue rather than inventing a colour.
         if (sat < 0.08) {
             setAccent(ACCENT_DEFAULT);
         } else {
             setAccent(hslToRgb(h, Math.min(1, Math.max(sat, 0.55)), 0.6));
         }
     } catch (e) {
-        // Tainted canvas or other failure: fall back to the neutral look.
         resetColors();
     }
 }
 
-// Authoritative transport state from the last poll. We interpolate
-// locally between polls so the bar advances smoothly instead of
-// jumping every 5s; each poll resyncs to the server's time.
 var progress = { time: 0, duration: 0, playing: false, syncedAt: 0 };
 
 function paintProgress() {
@@ -156,8 +131,6 @@ function paintProgress() {
     el.progressBar.style.width = pct + '%';
 }
 
-// Friendly labels for the provider keys returned by /lyrics.json.
-// Only "library" is translated; the web providers are proper nouns.
 var SOURCE_LABELS = {
     library:    I18N.source_library,
     lrclib:     'LRCLIB',
@@ -168,7 +141,6 @@ var SOURCE_LABELS = {
 function setLyrics(text, isEmpty) {
     el.lyrics.textContent = text;
     el.lyrics.classList.toggle('empty', !!isEmpty);
-    // Reset scroll so a new track's lyrics start from the top.
     el.lyrics.scrollTop = 0;
 }
 
@@ -206,15 +178,12 @@ function render(data) {
     el.artist.textContent = data.artist || '';
     el.album.textContent = data.album || '';
 
-    // Only repaint cover + lyrics when the track actually changes,
-    // so polling doesn't flicker the image or reset lyric scroll.
     if (data.track_id !== lastTrackId) {
         lastTrackId = data.track_id;
         currentTrack = data;
         el.cover.src = '/cover/' + (data.coverid || 0) + '.jpg';
         setLyrics(data.lyrics || I18N.no_lyrics, !data.lyrics);
         setLyricsSource(data.lyrics ? 'library' : null);
-        // Offer the web lookup only when the library has no lyrics.
         el.fetch.style.display = data.lyrics ? 'none' : '';
         el.fetch.disabled = false;
         el.fetch.textContent = '🔍 ' + I18N.fetch_lyrics;
@@ -232,7 +201,6 @@ el.fetch.addEventListener('click', function() {
         title:    currentTrack.title || '',
         album:    currentTrack.album || '',
         duration: currentTrack.duration || '',
-        // A retry forces a fresh LRCLIB lookup, bypassing the server cache.
         refresh:  lyricsTried ? '1' : '',
     });
     lyricsTried = true;
@@ -256,19 +224,15 @@ el.fetch.addEventListener('click', function() {
         });
 });
 
-// Re-tint whenever a new cover finishes loading.
 el.cover.addEventListener('load', sampleCoverTint);
 
 function poll() {
     fetch('/now-playing.json')
         .then(function(r) { return r.json(); })
         .then(render)
-        .catch(function() { /* keep last render on transient errors */ });
+        .catch(function() {});
 }
 
-// Stats change only when playcounts move, so refresh them less often
-// than now-playing. Elements carry data-stat (and optional data-stat-pct)
-// so we update text in place without reloading the page.
 function renderStats(stats) {
     document.querySelectorAll('[data-stat]').forEach(function(el) {
         var value = stats[el.dataset.stat];
@@ -283,8 +247,6 @@ function renderStats(stats) {
     dimZeroSubRows();
 }
 
-// Dim second-level breakdown rows whose count is zero. Reads the
-// leading integer of each .sub row's value (e.g. "0 (0%)" -> 0).
 function dimZeroSubRows() {
     document.querySelectorAll('.stat-row.sub').forEach(function(row) {
         var valEl = row.querySelector('[data-stat]');
@@ -297,7 +259,7 @@ function pollStats() {
     fetch('/stats.json')
         .then(function(r) { return r.json(); })
         .then(renderStats)
-        .catch(function() { /* keep last render on transient errors */ });
+        .catch(function() {});
 }
 
 dimZeroSubRows();
