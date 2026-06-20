@@ -331,6 +331,7 @@ hr {
 .np-fetch-lyrics {
     margin-top: 12px;
     font-size: 0.9rem;
+    line-height: 1.4;
     flex-shrink: 0;
 }
 

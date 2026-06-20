@@ -39,6 +39,9 @@ function setLyrionLink(playerId) {
     } else {
         el.lyrionLink.href = web;
         el.lyrionLink.target = 'lyrion';
+        // rel="noopener"/"noreferrer" makes a named target behave like
+        // _blank, defeating tab reuse; clear it for the (trusted) server.
+        el.lyrionLink.rel = '';
     }
 }
 var lastTrackId = null;
