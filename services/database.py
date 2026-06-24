@@ -54,7 +54,8 @@ def get_stats():
                     t.id,
                     t.album,
                     COALESCE(apc.playcount, 0) > 0 AS is_played,
-                    COALESCE(apc.playcount, 0)      AS playcount
+                    COALESCE(apc.playcount, 0)      AS playcount,
+                    COALESCE(apc.skipcount, 0)      AS skipcount
                 FROM tracks t
                 LEFT JOIN alternativeplaycount apc ON t.urlmd5 = apc.urlmd5
                 WHERE t.audio = 1
@@ -72,7 +73,8 @@ def get_stats():
                 (SELECT COUNT(*) FROM track_play)                               AS songs_total,
                 (SELECT SUM(is_played) FROM track_play)                        AS songs_played_apc,
                 (SELECT COUNT(*) - SUM(is_played) FROM track_play)             AS songs_unplayed_apc,
-                (SELECT SUM(playcount) FROM track_play WHERE playcount > 0)    AS songs_total_plays_apc
+                (SELECT SUM(playcount) FROM track_play WHERE playcount > 0)    AS songs_total_plays_apc,
+                (SELECT SUM(skipcount) FROM track_play WHERE skipcount > 0)    AS songs_total_skips_apc
             FROM album_agg
         """).fetchone()
 
@@ -86,6 +88,7 @@ def get_stats():
             "songs_played_apc":      row["songs_played_apc"] or 0,
             "songs_unplayed_apc":    row["songs_unplayed_apc"] or 0,
             "songs_total_plays_apc": row["songs_total_plays_apc"] or 0,
+            "songs_total_skips_apc": row["songs_total_skips_apc"] or 0,
         }
 
         # Query 2: artists (album artists) — single scan via contributor_track
