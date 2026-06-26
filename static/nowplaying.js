@@ -184,7 +184,9 @@ function render(data) {
     if (data.track_id !== lastTrackId) {
         lastTrackId = data.track_id;
         currentTrack = data;
-        el.cover.src = '/cover/' + (data.coverid || 0) + '.jpg';
+        el.cover.src = data.artwork_url
+            ? '/cover/remote.jpg?t=' + encodeURIComponent(data.track_id || '')
+            : '/cover/' + (data.coverid || 0) + '.jpg';
         setLyrics(data.lyrics || I18N.no_lyrics, !data.lyrics);
         setLyricsSource(data.lyrics ? 'library' : null);
         el.fetch.style.display = data.lyrics ? 'none' : '';

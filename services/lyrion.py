@@ -29,6 +29,16 @@ def fetch_cover(coverid):
     return r.content, r.headers.get("Content-Type", "image/jpeg")
 
 
+def fetch_remote_cover(url):
+    """Fetch artwork from a remote stream's artwork_url (Deezer, Spotify, radio
+    icons, etc.) so the page can serve it same-origin, same reasoning as
+    fetch_cover. These are public CDN URLs, not the local Lyrion host, so
+    certificate verification stays on."""
+    r = requests.get(url, timeout=5)
+    r.raise_for_status()
+    return r.content, r.headers.get("Content-Type", "image/jpeg")
+
+
 def get_players():
     payload = {
         "id": 1,
@@ -44,17 +54,22 @@ def get_now_playing(player_id):
 
     Uses the JSON-RPC `status` query for the current playlist position (`-`),
     asking for one item with the tags we display: a=artist, A=role-keyed
-    artist lists, l=album, d=duration, c=coverid. With tag A the multiple
-    artists come back joined by ", " under a role key (`trackartist` for the
-    track's contributors, `artist` for the ARTIST role) — we prefer
-    `trackartist` so a "feat." line shows everyone, matching Lyrion's display.
-    Title and the Lyrion track id come back by default; that id is the key
-    used to look up lyrics in the SQLite `tracks` table.
+    artist lists, l=album, d=duration, c=coverid, K=artwork_url. With tag A
+    the multiple artists come back joined by ", " under a role key
+    (`trackartist` for the track's contributors, `artist` for the ARTIST
+    role) — we prefer `trackartist` so a "feat." line shows everyone,
+    matching Lyrion's display. Title and the Lyrion track id come back by
+    default; that id is the key used to look up lyrics in the SQLite
+    `tracks` table.
+
+    Streamed tracks (Deezer, Spotify, radio, ...) have no local coverid, but
+    plugins for those services attach an `artwork_url` to the track instead —
+    that's what tag K surfaces. It's sometimes relative to the Lyrion host.
     """
     payload = {
         "id": 1,
         "method": "slim.request",
-        "params": [player_id, ["status", "-", 1, "tags:aAldc"]],
+        "params": [player_id, ["status", "-", 1, "tags:aAldcK"]],
     }
     data = lyrion_request(payload)
     result = data.get("result", {})
@@ -63,6 +78,11 @@ def get_now_playing(player_id):
 
     if not track:
         return {"playing": False, "mode": result.get("mode", "stop")}
+
+    artwork_url = track.get("artwork_url")
+    if artwork_url and not artwork_url.startswith("http"):
+        host = current_app.config["LYRION_HOST"]
+        artwork_url = f"{host}/{artwork_url.lstrip('/')}"
 
     return {
         "playing": result.get("mode") == "play",
@@ -73,7 +93,8 @@ def get_now_playing(player_id):
         "title": track.get("title"),
         "artist": track.get("trackartist") or track.get("artist") or track.get("albumartist"),
         "album": track.get("album"),
-        "coverid": track.get("coverid") or track.get("artwork_track_id") or track.get("id"),
+        "coverid": track.get("coverid"),
+        "artwork_url": artwork_url,
     }
 
 

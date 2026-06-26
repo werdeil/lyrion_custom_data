@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, current_app, jsonify, request, Response
+from flask import Blueprint, render_template, current_app, jsonify, request, Response, abort
 
-from services.lyrion import get_active_now_playing, fetch_cover
+from services.lyrion import get_active_now_playing, fetch_cover, fetch_remote_cover
 from services.database import get_track_lyrics, get_stats
 from services.lyrics import fetch_lyrics
 from i18n import pick_lang, TRANSLATIONS
@@ -34,6 +34,26 @@ def cover(coverid):
     """Proxy an album cover from Lyrion, served same-origin so the page can
     sample its colours on a canvas. Cached client-side since covers are stable."""
     content, content_type = fetch_cover(coverid)
+    return Response(
+        content,
+        content_type=content_type,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@nowplaying_bp.route("/cover/remote.jpg")
+def cover_remote():
+    """Proxy the artwork_url of the currently playing remote/streaming track
+    (Deezer, Spotify, radio, ...), same-origin like /cover/<id>.jpg.
+
+    Looked up server-side from Lyrion instead of taking a URL from the
+    client, so this can't be used as an open image proxy.
+    """
+    now = get_active_now_playing()
+    artwork_url = now.get("artwork_url")
+    if not artwork_url:
+        abort(404)
+    content, content_type = fetch_remote_cover(artwork_url)
     return Response(
         content,
         content_type=content_type,
