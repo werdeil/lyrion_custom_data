@@ -44,7 +44,7 @@ function setLyrionLink(playerId) {
         el.lyrionLink.rel = '';
     }
 }
-var lastTrackId = null;
+var lastTrackKey = null;
 var currentTrack = null;
 var lyricsTried = false;
 
@@ -159,7 +159,7 @@ function render(data) {
         el.cover.removeAttribute('src');
         setLyrionLink(null);
         resetColors();
-        lastTrackId = null;
+        lastTrackKey = null;
         currentTrack = null;
         progress = { time: 0, duration: 0, playing: false, syncedAt: 0 };
         el.progressBar.style.width = '0';
@@ -181,11 +181,16 @@ function render(data) {
     el.artist.textContent = data.artist || '';
     el.album.textContent = data.album || '';
 
-    if (data.track_id !== lastTrackId) {
-        lastTrackId = data.track_id;
+    // Some streamed sources (e.g. a Deezer "flow"/mix) keep a single playlist
+    // entry for the whole session and only push new title/artist/album via
+    // metadata updates, so track_id alone never changes between songs. Key
+    // off the visible metadata too so the cover still refreshes.
+    var trackKey = [data.track_id, data.title, data.artist, data.album].join('|');
+    if (trackKey !== lastTrackKey) {
+        lastTrackKey = trackKey;
         currentTrack = data;
         el.cover.src = data.artwork_url
-            ? '/cover/remote.jpg?t=' + encodeURIComponent(data.track_id || '')
+            ? '/cover/remote.jpg?t=' + encodeURIComponent(trackKey)
             : '/cover/' + (data.coverid || 0) + '.jpg';
         setLyrics(data.lyrics || I18N.no_lyrics, !data.lyrics);
         setLyricsSource(data.lyrics ? 'library' : null);
