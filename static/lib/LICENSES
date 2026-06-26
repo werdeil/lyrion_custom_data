@@ -1,0 +1,12 @@
+Third-party libraries vendored in this directory (used for cover-art colour
+extraction, mirroring Lyrion's Material skin).
+
+fast-average-color
+    Version: 9.3.0
+    URL: https://github.com/fast-average-color/fast-average-color
+    License: MIT (© 2022 Denis Seleznev)
+
+Vibrant
+    Version: 1.0
+    URL: https://github.com/jariz/vibrant.js
+    License: MIT (© Jari Zwarts)

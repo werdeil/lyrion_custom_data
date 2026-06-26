@@ -184,6 +184,8 @@
     <!-- UI strings for the dynamic (JS-rendered) bits, resolved server-side
          from the browser language. Static markup is translated via Jinja above. -->
     <script id="i18n-data" type="application/json">{{ t|tojson }}</script>
+    <script src="{{ url_for('static', filename='lib/vibrant.min.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='lib/fast-average-color.min.js') }}" defer></script>
     <script src="{{ url_for('static', filename='nowplaying.js') }}" defer></script>
 </body>
 </html>

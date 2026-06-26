@@ -64,57 +64,88 @@ function resetColors() {
     setAccent(ACCENT_DEFAULT);
 }
 
-function hslToRgb(h, s, l) {
-    function hue(p, q, t) {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1 / 6) return p + (q - p) * 6 * t;
-        if (t < 1 / 2) return q;
-        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-        return p;
+// Cover colour extraction mirrors Lyrion's Material skin (currentcover.js):
+// the tint is the *average* colour (FastAverageColor) while the accent is the
+// *dominant* vibrant swatch (Vibrant.js), normalised in HSV so every accent
+// lands at a consistent brightness. Helpers below are copied from Material.
+
+function rgb2Hsv(rgb) {
+    var r = rgb[0], g = rgb[1], b = rgb[2],
+        max = Math.max(r, g, b), min = Math.min(r, g, b),
+        d = max - min, h, s = (max === 0 ? 0 : d / max), v = max / 255;
+    switch (max) {
+        case min: h = 0; break;
+        case r: h = (g - b) + d * (g < b ? 6 : 0); h /= 6 * d; break;
+        case g: h = (b - r) + d * 2; h /= 6 * d; break;
+        case b: h = (r - g) + d * 4; h /= 6 * d; break;
     }
-    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    var p = 2 * l - q;
-    return 'rgb(' +
-        Math.round(hue(p, q, h + 1 / 3) * 255) + ',' +
-        Math.round(hue(p, q, h) * 255) + ',' +
-        Math.round(hue(p, q, h - 1 / 3) * 255) + ')';
+    return [h, s, v];
 }
+
+function hsv2Rgb(hsv) {
+    var h = hsv[0], s = hsv[1], v = hsv[2], r, g, b,
+        i = Math.floor(h * 6),
+        f = h * 6 - i,
+        p = v * (1 - s),
+        q = v * (1 - f * s),
+        t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        case 5: r = v; g = p; b = q; break;
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function isGrey(rgb) {
+    return Math.abs(rgb[0] - rgb[1]) < 2 &&
+           Math.abs(rgb[0] - rgb[2]) < 2 &&
+           Math.abs(rgb[1] - rgb[2]) < 2;
+}
+
+function rgb2Css(rgb) {
+    return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
+}
+
+// Dark UI: prefer the brightest swatches first, matching Material's order.
+var SWATCH_ORDER = ['Vibrant', 'LightVibrant', 'Muted', 'LightMuted', 'DarkVibrant', 'DarkMuted'];
+
+var fac;
 
 function sampleCoverTint() {
     try {
         var img = el.cover;
         if (!img.naturalWidth) { return; }
-        var s = 32;
-        var canvas = document.createElement('canvas');
-        canvas.width = s;
-        canvas.height = s;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, s, s);
-        var d = ctx.getImageData(0, 0, s, s).data;
-        var r = 0, g = 0, b = 0, n = 0;
-        for (var i = 0; i < d.length; i += 4) {
-            if (d[i + 3] < 125) { continue; }
-            r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
-        }
-        if (!n) { resetColors(); return; }
-        r = r / n / 255; g = g / n / 255; b = b / n / 255;
-        var max = Math.max(r, g, b), min = Math.min(r, g, b);
-        var l = (max + min) / 2, h = 0, sat = 0;
-        if (max !== min) {
-            var dd = max - min;
-            sat = l > 0.5 ? dd / (2 - max - min) : dd / (max + min);
-            if (max === r) { h = (g - b) / dd + (g < b ? 6 : 0); }
-            else if (max === g) { h = (b - r) / dd + 2; }
-            else { h = (r - g) / dd + 4; }
-            h /= 6;
-        }
-        setTint(hslToRgb(h, Math.min(1, Math.max(sat, 0.45)),
-                            Math.min(0.62, Math.max(0.42, l))));
-        if (sat < 0.08) {
+
+        // Dominant vibrant swatch -> accent.
+        var vRgb;
+        try {
+            var swatches = new Vibrant(img).swatches();
+            for (var i = 0; i < SWATCH_ORDER.length && !vRgb; i++) {
+                var sw = swatches[SWATCH_ORDER[i]];
+                if (sw && sw.getPopulation() > 0) { vRgb = sw.getRgb(); }
+            }
+        } catch (e) { /* fall through to average-only */ }
+
+        // Average colour -> tint.
+        if (!fac) { fac = new FastAverageColor(); }
+        var avg = fac.getColor(img, { mode: 'precision' });
+        var avRgb = [avg.value[0], avg.value[1], avg.value[2]];
+
+        setTint(rgb2Css(avRgb));
+
+        // Grey covers (or no usable swatch) fall back to the default accent,
+        // exactly like Material does.
+        if (isGrey(avRgb) || !vRgb || isGrey(vRgb)) {
             setAccent(ACCENT_DEFAULT);
         } else {
-            setAccent(hslToRgb(h, Math.min(1, Math.max(sat, 0.55)), 0.6));
+            var hsv = rgb2Hsv(vRgb);
+            hsv[2] = 0.8235;                 // fixed brightness (Material's V)
+            hsv[1] = Math.min(hsv[1], 0.8);  // cap saturation
+            setAccent(rgb2Css(hsv2Rgb(hsv)));
         }
     } catch (e) {
         resetColors();
