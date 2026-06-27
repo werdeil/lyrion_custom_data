@@ -21,9 +21,18 @@ var el = {
     source: document.getElementById('np-lyrics-source'),
     cover:  document.getElementById('np-cover-img'),
     fetch:  document.getElementById('np-fetch-lyrics'),
+    autoToggle: document.getElementById('np-auto-lyrics-toggle'),
     progressBar: document.getElementById('np-progress-bar'),
     lyrionLink: document.getElementById('lyrion-link'),
 };
+
+// When enabled, the web lyrics search fires automatically for any track whose
+// local library has no lyrics, instead of waiting for a manual click. The
+// preference is remembered across reloads in localStorage.
+var AUTO_LYRICS_KEY = 'np-auto-lyrics';
+var autoLyrics = false;
+try { autoLyrics = localStorage.getItem(AUTO_LYRICS_KEY) === '1'; } catch (e) {}
+if (el.autoToggle) { el.autoToggle.checked = autoLyrics; }
 
 var MATERIAL_BASE = LYRION_HOST ? LYRION_HOST + '/material/' : '#';
 var IS_ANDROID = /Android/i.test(navigator.userAgent || '');
@@ -229,25 +238,35 @@ function render(data) {
         el.fetch.disabled = false;
         el.fetch.textContent = '🔍 ' + I18N.fetch_lyrics;
         lyricsTried = false;
+
+        // With auto-search on, skip the manual click for tracks the library has
+        // no lyrics for and look them up on the web straight away.
+        if (autoLyrics && !data.lyrics) {
+            fetchLyrics();
+        }
     }
 }
 
-el.fetch.addEventListener('click', function() {
+function fetchLyrics() {
     if (!currentTrack) { return; }
+    var track = currentTrack;
     el.fetch.disabled = true;
     el.fetch.textContent = I18N.searching;
     var params = new URLSearchParams({
-        track_id: currentTrack.track_id || '',
-        artist:   currentTrack.artist || '',
-        title:    currentTrack.title || '',
-        album:    currentTrack.album || '',
-        duration: currentTrack.duration || '',
+        track_id: track.track_id || '',
+        artist:   track.artist || '',
+        title:    track.title || '',
+        album:    track.album || '',
+        duration: track.duration || '',
         refresh:  lyricsTried ? '1' : '',
     });
     lyricsTried = true;
     fetch('/lyrics.json?' + params.toString(), { cache: 'no-store' })
         .then(function(r) { return r.json(); })
         .then(function(res) {
+            // The track may have changed while the request was in flight; if so,
+            // render() has already reset the UI for the new one — don't clobber it.
+            if (track !== currentTrack) { return; }
             var lyrics = res.lyrics || res.synced;
             if (lyrics) {
                 setLyrics(lyrics, false);
@@ -260,10 +279,26 @@ el.fetch.addEventListener('click', function() {
             }
         })
         .catch(function() {
+            if (track !== currentTrack) { return; }
             el.fetch.disabled = false;
             el.fetch.textContent = '🔍 ' + I18N.retry;
         });
-});
+}
+
+el.fetch.addEventListener('click', fetchLyrics);
+
+if (el.autoToggle) {
+    el.autoToggle.addEventListener('change', function() {
+        autoLyrics = el.autoToggle.checked;
+        try { localStorage.setItem(AUTO_LYRICS_KEY, autoLyrics ? '1' : '0'); } catch (e) {}
+        // Turning it on while a lyric-less track is showing: search right away
+        // instead of waiting for the next track.
+        if (autoLyrics && currentTrack && !lyricsTried &&
+            el.fetch.style.display !== 'none' && !el.fetch.disabled) {
+            fetchLyrics();
+        }
+    });
+}
 
 el.cover.addEventListener('load', sampleCoverTint);
 

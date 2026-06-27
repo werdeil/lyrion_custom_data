@@ -329,6 +329,60 @@ hr {
     display: none;
 }
 
+.np-auto-lyrics {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: #b0b0b0;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+/* Visually-hidden native checkbox; the track/thumb below render the switch. */
+.np-auto-lyrics input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.np-toggle-track {
+    position: relative;
+    flex-shrink: 0;
+    width: 34px;
+    height: 18px;
+    border-radius: 9px;
+    background: #3a3a3a;
+    transition: background 200ms ease;
+}
+
+.np-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    transition: transform 200ms ease;
+}
+
+.np-auto-lyrics input:checked + .np-toggle-track {
+    background: var(--accent-color);
+}
+
+.np-auto-lyrics input:checked + .np-toggle-track .np-toggle-thumb {
+    transform: translateX(16px);
+}
+
+.np-auto-lyrics input:focus-visible + .np-toggle-track {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .np-fetch-lyrics {
     margin-top: 12px;
     font-size: 0.9rem;

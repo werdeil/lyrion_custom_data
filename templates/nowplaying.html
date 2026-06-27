@@ -39,6 +39,11 @@
                     </div>
                     <div class="np-lyrics" id="np-lyrics"></div>
                     <p class="np-lyrics-source" id="np-lyrics-source"></p>
+                    <label class="np-auto-lyrics" id="np-auto-lyrics">
+                        <input type="checkbox" id="np-auto-lyrics-toggle">
+                        <span class="np-toggle-track"><span class="np-toggle-thumb"></span></span>
+                        <span class="np-toggle-label">{{ t.auto_fetch_lyrics }}</span>
+                    </label>
                     <button class="np-fetch-lyrics" id="np-fetch-lyrics" type="button">
                         &#128269; {{ t.fetch_lyrics }}
                     </button>
