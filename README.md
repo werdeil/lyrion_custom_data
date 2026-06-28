@@ -1,130 +1,132 @@
+[English](README.md) | [Français](README.fr.md)
+
 # Lyrion Custom Data
 
-Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Community/slimserver) (anciennement Logitech Media Server / Squeezebox Server).
+A Flask web app for [Lyrion Music Server](https://github.com/LMS-Community/slimserver) (formerly Logitech Media Server / Squeezebox Server).
 
-## Fonctionnalités
+## Features
 
-- **Now Playing** -- Détecte automatiquement le lecteur en cours de lecture et affiche sa piste (pochette, titre, artiste, album) et ses paroles, rafraîchi via l'API JSON-RPC de Lyrion.
-- **Statistiques de la bibliothèque** -- Albums, artistes, morceaux joués/non joués, genres, notes, paroles, vélocité d'écoute sur 30 jours.
-- **Serveur de fichiers** -- Sert les fichiers depuis un répertoire configurable.
+- **Now Playing** -- Automatically detects the player currently playing and shows its track (cover art, title, artist, album) and lyrics, refreshed live via Lyrion's JSON-RPC API.
+- **Library statistics** -- Albums, artists, played/unplayed tracks, genres, ratings, lyrics, 30-day listening velocity.
+- **File server** -- Serves files from a configurable directory.
 
-## Structure du projet
+## Project structure
 
 ```
-├── app.py                 # Point d'entrée Flask (factory)
-├── config.py              # Configuration centralisée (env vars)
-├── requirements.txt       # Dépendances Python
-├── docker-compose.yml     # Déploiement via Docker
-├── .env.example           # Modèle de configuration
+├── app.py                 # Flask entry point (factory)
+├── config.py              # Centralized configuration (env vars)
+├── requirements.txt       # Python dependencies
+├── docker-compose.yml     # Docker deployment
+├── .env.example           # Configuration template
 ├── routes/
-│   ├── nowplaying.py      # Routes : /  et  /now-playing.json
-│   └── custom.py          # Routes : /files/<path>
+│   ├── nowplaying.py      # Routes: /  and  /now-playing.json
+│   └── custom.py          # Route: /files/<path>
 ├── services/
-│   ├── lyrion.py          # Client JSON-RPC Lyrion
-│   └── database.py        # Accès SQLite (paroles, stats)
+│   ├── lyrion.py          # Lyrion JSON-RPC client
+│   └── database.py        # SQLite access (lyrics, stats)
 └── templates/
-    └── nowplaying.html    # Dashboard principal
+    └── nowplaying.html    # Main dashboard
 ```
 
-## Pré-requis
+## Requirements
 
 - Python 3.12+
-- Un serveur Lyrion Music Server accessible
-- Le plugin [Alternative Play Count](https://github.com/AF-1/lms-alternativeplaycount) installé sur Lyrion
+- An accessible Lyrion Music Server
+- The [Alternative Play Count](https://github.com/AF-1/lms-alternativeplaycount) plugin installed on Lyrion
 
 ## Installation
 
-### Avec Docker (recommandé)
+### With Docker (recommended)
 
 ```bash
 cp .env.example .env
-# Éditer .env avec vos valeurs
+# Edit .env with your values
 docker compose up -d
 ```
 
-### Personnalisation locale Docker Compose
+### Local Docker Compose customization
 
-Pour ajouter des services ou des options locales sans polluer les changements Git, copiez le modèle d'override :
+To add services or local options without polluting Git changes, copy the override template:
 
 ```bash
 cp docker-compose.override.yml.example docker-compose.override.yml
-# Éditer docker-compose.override.yml selon vos besoins
+# Edit docker-compose.override.yml to suit your needs
 docker compose up -d
 ```
 
-Docker Compose charge automatiquement `docker-compose.override.yml` en complément du fichier principal.
+Docker Compose automatically loads `docker-compose.override.yml` on top of the main file.
 
-### Sans Docker
+### Without Docker
 
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
-# Éditer .env avec vos valeurs
+# Edit .env with your values
 source .env
 python app.py
 ```
 
-L'application est accessible sur `http://localhost:1111`.
+The app is available at `http://localhost:1111`.
 
 ## Configuration
 
-| Variable | Description | Défaut |
+| Variable | Description | Default |
 |---|---|---|
-| `LYRION_HOST` | URL du serveur Lyrion (ex: `https://lyrion.local:9000`) | -- |
-| `DB_PATH` | Chemin absolu vers la base SQLite de Lyrion | -- |
-| `DB_PERSIST_PATH` | Chemin absolu vers la base persistante de Lyrion | -- |
-| `SECRET_KEY` | Clé secrète Flask | `supersecretkey` |
-| `CUSTOM_DATA_DIR` | Répertoire des fichiers générés | `/opt/scripts/custom_data` |
-| `HOST` | Adresse d'écoute | `0.0.0.0` |
-| `PORT` | Port d'écoute | `1111` |
+| `LYRION_HOST` | Lyrion server URL (e.g. `https://lyrion.local:9000`) | -- |
+| `DB_DIR` | Directory containing Lyrion's `library.db` | -- |
+| `DB_PERSIST_DIR` | Directory containing Lyrion's `persist.db` | -- |
+| `SECRET_KEY` | Flask secret key | `supersecretkey` |
+| `CUSTOM_DATA_DIR` | Generated files directory | `/opt/scripts/custom_data` |
+| `HOST` | Listen address | `0.0.0.0` |
+| `PORT` | Listen port | `1111` |
 
 ## Endpoints
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| GET | `/` | Dashboard principal (now playing + stats) |
-| GET | `/now-playing.json` | État live de la piste du lecteur en cours de lecture, détecté automatiquement (JSON) |
-| GET | `/files/<path>` | Sert un fichier depuis le répertoire custom data |
+| GET | `/` | Main dashboard (now playing + stats) |
+| GET | `/now-playing.json` | Live state of the currently playing track, auto-detected (JSON) |
+| GET | `/files/<path>` | Serves a file from the custom data directory |
 
 ## Scripts
 
-### Intégrer les paroles dans les fichiers (`scripts/embed_lyrics.py`)
+### Embed lyrics into files (`scripts/embed_lyrics.py`)
 
-Parcourt un dossier (ou des fichiers), récupère les paroles auprès des fournisseurs web et les écrit dans le tag *lyrics* de chaque morceau. Lyrion n'est jamais sollicité : lancez le script quand vous voulez, Lyrion prendra les changements au prochain scan. La configuration (`.env`) est lue automatiquement.
+Walks a folder (or files), fetches lyrics from web providers and writes them into the *lyrics* tag of each track. Lyrion is never contacted: run the script whenever you want, Lyrion will pick up the changes on its next scan. Configuration (`.env`) is read automatically.
 
 ```bash
-python scripts/embed_lyrics.py /chemin/vers/musique [options]
-# Les jokers shell fonctionnent, même entre guillemets :
-python scripts/embed_lyrics.py "/chemin/vers/musique/A*" /chemin/vers/musique/B*
+python scripts/embed_lyrics.py /path/to/music [options]
+# Shell globs work, even when quoted:
+python scripts/embed_lyrics.py "/path/to/music/A*" /path/to/music/B*
 ```
 
 | Option | Description |
 |---|---|
-| `--force` | Réécrit le tag même si des paroles sont déjà présentes. |
-| `--clear` | Efface le tag existant quand rien n'est trouvé en ligne, pour refléter ce que proposent les fournisseurs. Traite aussi les fichiers déjà taggés (donc une requête web par fichier) ; combinable avec `--force`. |
-| `--dry-run` | Affiche ce qui serait fait, sans rien écrire. |
-| `--delay 0.5` | Délai (secondes) entre deux requêtes web (défaut : 0.5). |
-| `--verbose` | Journalise chaque fichier, y compris ceux ignorés. |
+| `--force` | Rewrites the tag even if lyrics are already present. |
+| `--clear` | Erases the existing tag when nothing is found online, to reflect what the providers offer. Also processes already-tagged files (so one web request per file); combinable with `--force`. |
+| `--dry-run` | Prints what would be done, without writing anything. |
+| `--delay 0.5` | Delay (seconds) between web requests (default: 0.5). |
+| `--verbose` | Logs every file, including skipped ones. |
 
-### Cron : ne re-taguer que les fichiers modifiés (`scripts/embed_lyrics_cron.sh`)
+### Cron: only re-tag changed files (`scripts/embed_lyrics_cron.sh`)
 
-Wrapper destiné au cron : il ne passe à `embed_lyrics.py` que les fichiers dont le `ctime` a changé depuis la dernière passe réussie (`find -cnewer`), via un fichier marqueur.
+A cron-oriented wrapper that only feeds `embed_lyrics.py` the files whose `ctime` changed since the last successful pass (`find -cnewer`), via a marker file.
 
 ```bash
-scripts/embed_lyrics_cron.sh /chemin/vers/musique [MARQUEUR] [-- OPTIONS]
+scripts/embed_lyrics_cron.sh /path/to/music [MARKER] [-- OPTIONS]
 ```
 
-- `MARQUEUR` : fichier d'horodatage (défaut : `state/embed_lyrics.last_run` à la racine du repo). Absent → toute la bibliothèque est traitée (première passe).
-- Le marqueur est horodaté au **début** de la passe et n'avance qu'**en cas de succès** : un échec ne fait pas avancer la fenêtre, et un fichier modifié pendant la passe est repris au prochain run. `--dry-run` ne fait pas avancer le marqueur.
-- Tout ce qui suit `--` est transmis tel quel à `embed_lyrics.py` (ex. `-- --clear --delay 1`).
+- `MARKER`: timestamp file (default: `state/embed_lyrics.last_run` at the repo root). Missing → the whole library is processed (first pass).
+- The marker is stamped at the **start** of the pass and only advances **on success**: a failure does not move the window forward, and a file modified during the pass is picked up on the next run. `--dry-run` does not advance the marker.
+- Everything after `--` is forwarded as-is to `embed_lyrics.py` (e.g. `-- --clear --delay 1`).
 
 ```cron
-30 3 * * * /chemin/vers/custom_data/scripts/embed_lyrics_cron.sh \
-  /chemin/vers/musique >> /tmp/embed_lyrics.log 2>&1
+30 3 * * * /path/to/custom_data/scripts/embed_lyrics_cron.sh \
+  /path/to/music >> /tmp/embed_lyrics.log 2>&1
 ```
 
-> Le `ctime` (et non le `mtime`) est utilisé volontairement : il capte aussi les ré-écritures de tags en place et les fichiers copiés en conservant leur `mtime` (`rsync -a`, `cp -p`).
+> `ctime` (not `mtime`) is used on purpose: it also catches in-place tag rewrites and files copied while preserving their `mtime` (`rsync -a`, `cp -p`).
 
-## Licence
+## License
 
-Ce projet est distribué sous licence MIT — voir le fichier [LICENSE](LICENSE).
+This project is distributed under the MIT license — see the [LICENSE](LICENSE) file.
