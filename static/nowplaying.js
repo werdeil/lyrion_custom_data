@@ -372,19 +372,25 @@ function render(data) {
         setLyricsSource(data.lyrics ? 'library' : null);
         lyricsTried = false;
 
-        // The search-mode control only makes sense for tracks the library has no
-        // lyrics for (typically streamed sources like Deezer or AirPlay), so it
-        // stays hidden on local tracks that already show their lyrics. The active
-        // segment reflects the persistent mode; 'once' never carries over, so a
-        // new track resets the control to 'off' or 'auto'.
+        // The search-mode control is shown when the library has no lyrics at
+        // all, but also when it has plain-text lyrics that could be upgraded
+        // to a synced (LRC) version from the web. It stays hidden only when
+        // we already have synced lyrics locally.
+        var needsWebSync = data.lyrics && !data.lyrics_synced;
         if (el.modeBlock) {
-            el.modeBlock.style.display = data.lyrics ? 'none' : '';
+            el.modeBlock.style.display = (!data.lyrics || needsWebSync) ? '' : 'none';
             setActiveSeg(lyricsMode);
         }
 
-        // In auto mode, look the lyrics up on the web straight away.
-        if (lyricsMode === 'auto' && !data.lyrics) {
-            fetchLyrics();
+        // In auto mode, look the lyrics up on the web straight away — either
+        // because the library has nothing, or because it only has plain text
+        // and we want the synced version.
+        if (lyricsMode === 'auto') {
+            if (!data.lyrics) {
+                fetchLyrics();
+            } else if (needsWebSync) {
+                trySyncedFromWeb();
+            }
         }
     }
 }
@@ -426,18 +432,44 @@ function fetchLyrics() {
         });
 }
 
+function trySyncedFromWeb() {
+    if (!currentTrack) { return; }
+    var track = currentTrack;
+    var params = new URLSearchParams({
+        track_id: track.track_id || '',
+        artist:   track.artist || '',
+        title:    track.title || '',
+        album:    track.album || '',
+        duration: track.duration || '',
+        refresh:  lyricsTried ? '1' : '',
+    });
+    lyricsTried = true;
+    fetch('/lyrics.json?' + params.toString(), { cache: 'no-store' })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (track !== currentTrack) { return; }
+            // Only replace the local plain lyrics if the web returned synced
+            // (LRC) lyrics — otherwise keep what the library already has.
+            if (res.synced) {
+                setLyrics(res.synced, false, true);
+                setLyricsSource(res.source);
+            }
+        })
+        .catch(function() {});
+}
+
 function selectMode(mode) {
     if (!currentTrack) { return; }
     setActiveSeg(mode);
-    // 'auto' is the only mode that keeps searching future tracks. 'off' and
-    // 'once' both leave auto behind by saving 'off', so the next track won't
-    // auto-search; 'once' just additionally searches the current track now.
     lyricsMode = (mode === 'auto') ? 'auto' : 'off';
     persistMode();
-    // Search the current track for 'auto'/'once' only when nothing is shown yet;
-    // if lyrics are already on screen (e.g. switching Auto -> Once), reuse them.
-    if (mode !== 'off' && el.lyrics.classList.contains('empty')) {
+    if (mode === 'off') { return; }
+    // 'once'/'auto': search if no lyrics, or try to upgrade plain lyrics to
+    // synced. If synced lyrics are already on screen, there's nothing to do.
+    if (!currentLyricsText) {
         fetchLyrics();
+    } else if (!currentLyricsSynced) {
+        trySyncedFromWeb();
     }
 }
 
