@@ -1,6 +1,9 @@
+import re
 import sqlite3
 from flask import current_app
 from contextlib import contextmanager
+
+_LRC_LINE_RE = re.compile(r"^\[\d+:\d{2}(?:\.\d+)?\]")
 
 
 @contextmanager
@@ -23,9 +26,13 @@ def get_db_conn():
 
 
 def get_track_lyrics(track_id):
-    """Return the stored lyrics for a Lyrion track id, or None if absent."""
+    """Return {"lyrics": str|None, "synced": bool} for a Lyrion track id.
+
+    ``synced`` is True when the stored lyrics contain LRC timestamps
+    (``[mm:ss.xx]`` at the start of at least one line).
+    """
     if not track_id:
-        return None
+        return {"lyrics": None, "synced": False}
 
     with get_db_conn() as conn:
         row = conn.execute(
@@ -34,8 +41,10 @@ def get_track_lyrics(track_id):
         ).fetchone()
 
     if row and row["lyrics"]:
-        return row["lyrics"]
-    return None
+        text = row["lyrics"]
+        synced = any(_LRC_LINE_RE.match(line) for line in text.splitlines())
+        return {"lyrics": text, "synced": synced}
+    return {"lyrics": None, "synced": False}
 
 
 def get_stats():

@@ -28,6 +28,8 @@ TRANSLATIONS = {
         "cover_alt": "Pochette",
         "source_prefix": "Source :",
         "source_library": "Bibliothèque",
+        "sync_on": "Paroles synchronisées",
+        "sync_off": "Paroles simples",
         # Stats
         "stats_title": "Statistiques",
         "albums": "Albums",
@@ -67,6 +69,8 @@ TRANSLATIONS = {
         "cover_alt": "Cover",
         "source_prefix": "Source:",
         "source_library": "Library",
+        "sync_on": "Synced lyrics",
+        "sync_off": "Plain lyrics",
         # Stats
         "stats_title": "Statistics",
         "albums": "Albums",
