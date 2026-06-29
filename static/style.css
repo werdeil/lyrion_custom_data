@@ -318,7 +318,7 @@ hr {
     overflow-x: hidden;
     white-space: pre-wrap;
     /* Drives line spacing in both plain and synced modes — keep them in sync. */
-    line-height: 1.9;
+    line-height: 2.0;
     color: #e0e0e0;
     font-size: 0.95rem;
     /* Centre plain lyrics too, so they match the synced (karaoke) layout. */
