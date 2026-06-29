@@ -314,7 +314,9 @@ function syncLyrics() {
 
     if (activeIdx >= 0 && activeIdx < children.length) {
         var active = children[activeIdx];
-        var target = active.offsetTop - el.lyrics.clientHeight / 2 + active.clientHeight / 2;
+        // Anchor the active line around the upper third of the box rather than
+        // dead centre, so fewer past lines linger and more upcoming lines show.
+        var target = active.offsetTop - el.lyrics.clientHeight / 3 + active.clientHeight / 2;
         el.lyrics.scrollTop = Math.max(0, target);
     }
 }
