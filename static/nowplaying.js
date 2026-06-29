@@ -192,6 +192,8 @@ function sampleCoverTint() {
 }
 
 var progress = { time: 0, duration: 0, playing: false, syncedAt: 0 };
+// Last measured now-playing round-trip latency (ms), used to back-date syncedAt.
+var pollRtt = 0;
 
 function paintProgress() {
     var t = progress.time;
@@ -350,7 +352,9 @@ function render(data) {
         time: data.time || 0,
         duration: data.duration || 0,
         playing: !!data.playing,
-        syncedAt: Date.now(),
+        // Back-date by half the measured round trip so the extrapolation clock
+        // starts from when Lyrion actually read the position, not when we got it.
+        syncedAt: Date.now() - pollRtt / 2,
     };
     paintProgress();
     setLyrionLink(data.player_id);
@@ -494,9 +498,18 @@ if (el.syncToggle) {
 el.cover.addEventListener('load', sampleCoverTint);
 
 function poll() {
+    // Time the round trip so render() can back-date the position. data.time is
+    // measured server-side (when it queries Lyrion), but we only learn it after
+    // the whole network round trip, by which point playback has moved on. The
+    // measurement sits roughly mid-trip, so half the RTT is a fair estimate of
+    // how stale the value already is when it reaches us.
+    var sentAt = Date.now();
     fetch('/now-playing.json')
         .then(function(r) { return r.json(); })
-        .then(render)
+        .then(function(data) {
+            pollRtt = Date.now() - sentAt;
+            render(data);
+        })
         .catch(function() {});
 }
 
