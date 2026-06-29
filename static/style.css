@@ -357,7 +357,9 @@ hr {
 }
 
 .np-lyrics-source {
-    margin-top: 6px;
+    /* Sits on the control's row, pushed to the right, instead of taking its own
+       line above it. margin-left:auto right-aligns it within the flex row. */
+    margin: 0 0 0 auto;
     font-size: 0.78rem;
     color: #828282;
     flex-shrink: 0;
