@@ -337,7 +337,7 @@ hr {
 }
 
 .lrc-line.active {
-    color: #ffffff;
+    color: var(--accent-color);
     font-weight: bold;
     transform: scale(1.03);
 }
