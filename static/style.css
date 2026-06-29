@@ -358,8 +358,9 @@ hr {
     display: none;
 }
 
-/* Segmented control: one exclusive choice covering both web search and how
-   lyrics are shown — None / Plain / Synced / Auto — with a label beside it. */
+/* Segmented control: pick the web-search mode (None / Once / Auto) in one
+   element, with a label beside it. Display (synced karaoke vs plain text) is
+   automatic, so it isn't a control here. */
 .np-lyrics-mode-block {
     display: flex;
     align-items: center;
