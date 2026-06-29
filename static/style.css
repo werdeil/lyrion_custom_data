@@ -358,22 +358,15 @@ hr {
     display: none;
 }
 
-.np-lyrics-actions {
+/* Segmented control: one exclusive choice covering both web search and how
+   lyrics are shown — None / Plain / Synced / Auto — with a label beside it. */
+.np-lyrics-mode-block {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 6px 10px;
     margin-top: 12px;
     flex-shrink: 0;
-}
-
-/* Segmented control: pick the web-search mode (None / Once / Auto) in one
-   element, with a label above so its purpose is clear. */
-.np-lyrics-mode-block {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px 10px;
 }
 
 .np-lyrics-mode-label {
@@ -421,18 +414,6 @@ hr {
     .np-mode-seg.is-active:hover {
         background: var(--accent-color);
     }
-}
-
-.np-sync-toggle {
-    font-size: 0.9rem;
-    line-height: 1.4;
-    background: color-mix(in srgb, var(--accent-color) 15%, transparent);
-    color: #e0e0e0;
-    border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
-}
-
-.np-sync-toggle:hover {
-    background: color-mix(in srgb, var(--accent-color) 25%, transparent);
 }
 
 .np-empty {

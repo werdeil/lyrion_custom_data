@@ -22,19 +22,20 @@ var el = {
     cover:  document.getElementById('np-cover-img'),
     modeBlock: document.getElementById('np-lyrics-mode-block'),
     modeControl: document.getElementById('np-lyrics-mode'),
-    syncToggle: document.getElementById('np-sync-toggle'),
     progressBar: document.getElementById('np-progress-bar'),
     lyrionLink: document.getElementById('lyrion-link'),
 };
 
-// Web lyrics search has three modes, picked from a single segmented control:
-//   'off'  – never query the web, just show "no lyrics"
-//   'once' – search the current track now, then fall back to 'off'
-//   'auto' – search this track and every later one the library has no lyrics for
-// Only 'off' and 'auto' are persistent states (localStorage). 'once' is not a
-// state: choosing it searches the current track but saves 'off', so picking
-// "once" while in auto leaves auto for good rather than resuming on the next
-// track. Its highlight lasts until the track changes.
+// A single segmented control covers both where lyrics come from and how they
+// are shown:
+//   'off'    – never query the web; show local lyrics as plain text
+//   'simple' – show plain text, searching the web once if nothing is local
+//   'synced' – show synced karaoke (local LRC, or search the web once for it)
+//   'auto'   – search every track automatically, karaoke when available
+// Only 'off' and 'auto' are persistent states (localStorage). 'simple' and
+// 'synced' are one-shots: they act on the current track but save 'off', so
+// picking one while in auto leaves auto for good rather than resuming on the
+// next track. Their effect lasts until the track changes.
 var LYRICS_MODE_KEY = 'np-lyrics-mode';
 var lyricsMode = 'off';
 try {
@@ -83,7 +84,9 @@ var lyricsTried = false;
 
 var lrcLines = null;
 var lrcOffset = 0;
-var syncEnabled = localStorage.getItem('lrc-sync') !== 'off';
+// Whether the current track should render as synced karaoke (vs plain text).
+// Derived from the chosen mode each track, not a persistent preference.
+var displaySynced = (lyricsMode === 'auto');
 var currentLyricsText = null;
 var currentLyricsSynced = false;
 
@@ -246,19 +249,20 @@ function setLyrics(text, isEmpty, isSynced) {
     lrcLines = null;
 
     if (!text || isEmpty) {
-        currentLyricsText = text || null;
+        // Placeholders ("searching\u2026", "no lyrics") aren't real lyrics: keep
+        // currentLyricsText null so a retry re-searches instead of redisplaying.
+        currentLyricsText = null;
         currentLyricsSynced = false;
         el.lyrics.textContent = text || I18N.no_lyrics;
         el.lyrics.classList.toggle('empty', !!isEmpty || !text);
-        updateSyncToggle(null);
         return;
     }
 
     currentLyricsText = text;
     currentLyricsSynced = !!isSynced;
 
-    var parsed = (isSynced || syncEnabled) ? parseLRC(text) : null;
-    if (parsed && syncEnabled) {
+    var parsed = parseLRC(text);
+    if (parsed && displaySynced) {
         lrcLines = parsed;
         el.lyrics.classList.add('lrc-mode');
         for (var i = 0; i < parsed.length; i++) {
@@ -268,23 +272,13 @@ function setLyrics(text, isEmpty, isSynced) {
             div.textContent = parsed[i].text || '\u00a0';
             el.lyrics.appendChild(div);
         }
-        updateSyncToggle(parsed);
         syncLyrics();
+    } else if (parsed) {
+        // Plain display of LRC content: drop the [mm:ss] timestamps so they
+        // don't show as raw text.
+        el.lyrics.textContent = parsed.map(function(p) { return p.text; }).join('\n');
     } else {
         el.lyrics.textContent = text;
-        updateSyncToggle(parseLRC(text));
-    }
-}
-
-function updateSyncToggle(parsed) {
-    if (!el.syncToggle) { return; }
-    if (parsed && parsed.length) {
-        el.syncToggle.style.display = '';
-        el.syncToggle.textContent = syncEnabled
-            ? '\u23f8 ' + I18N.sync_off
-            : '\u25b6 ' + I18N.sync_on;
-    } else {
-        el.syncToggle.style.display = 'none';
     }
 }
 
@@ -342,7 +336,6 @@ function render(data) {
         lrcLines = null;
         progress = { time: 0, duration: 0, playing: false, syncedAt: 0 };
         el.progressBar.style.width = '0';
-        if (el.syncToggle) { el.syncToggle.style.display = 'none'; }
         return;
     }
 
@@ -371,6 +364,8 @@ function render(data) {
     if (trackKey !== lastTrackKey) {
         lastTrackKey = trackKey;
         currentTrack = data;
+        // A new track drops any one-shot mode and follows the persistent state.
+        displaySynced = (lyricsMode === 'auto');
         el.cover.src = data.artwork_url
             ? '/cover/remote.jpg?t=' + encodeURIComponent(trackKey)
             : '/cover/' + (data.coverid || 0) + '.jpg';
@@ -378,13 +373,11 @@ function render(data) {
         setLyricsSource(data.lyrics ? 'library' : null);
         lyricsTried = false;
 
-        // The search-mode control is shown when the library has no lyrics at
-        // all, but also when it has plain-text lyrics that could be upgraded
-        // to a synced (LRC) version from the web. It stays hidden only when
-        // we already have synced lyrics locally.
+        // The unified control is always available while a track plays, so the
+        // mode (None / Plain / Synced / Auto) can be switched at any time.
         var needsWebSync = data.lyrics && !data.lyrics_synced;
         if (el.modeBlock) {
-            el.modeBlock.style.display = (!data.lyrics || needsWebSync) ? '' : 'none';
+            el.modeBlock.style.display = '';
             setActiveSeg(lyricsMode);
         }
 
@@ -424,9 +417,17 @@ function fetchLyrics() {
             // The track may have changed while the request was in flight; if so,
             // render() has already reset the UI for the new one — don't clobber it.
             if (track !== currentTrack) { return; }
-            var lyrics = res.lyrics || res.synced;
+            // Prefer the synced (LRC) version in karaoke modes, plain otherwise.
+            var lyrics, synced;
+            if (displaySynced && res.synced) {
+                lyrics = res.synced; synced = true;
+            } else if (res.lyrics) {
+                lyrics = res.lyrics; synced = false;
+            } else {
+                lyrics = res.synced || null; synced = !!res.synced;
+            }
             if (lyrics) {
-                setLyrics(lyrics, false, !!res.synced);
+                setLyrics(lyrics, false, synced);
                 setLyricsSource(res.source);
             } else {
                 setLyrics(I18N.no_lyrics_web, true, false);
@@ -464,34 +465,50 @@ function trySyncedFromWeb() {
         .catch(function() {});
 }
 
+// Re-render the library's own lyrics for this track (used when leaving a web
+// search), honouring the current displaySynced choice.
+function showLocal() {
+    var data = currentTrack || {};
+    setLyrics(data.lyrics || I18N.no_lyrics, !data.lyrics, data.lyrics_synced);
+    setLyricsSource(data.lyrics ? 'library' : null);
+}
+
 function selectMode(mode) {
     if (!currentTrack) { return; }
     setActiveSeg(mode);
+    // Only 'off' and 'auto' persist; 'simple'/'synced' are one-shots that leave
+    // the persistent state at 'off' (so they don't resume on the next track).
     lyricsMode = (mode === 'auto') ? 'auto' : 'off';
     persistMode();
-    if (mode === 'off') { return; }
-    // 'once'/'auto': search if no lyrics, or try to upgrade plain lyrics to
-    // synced. If synced lyrics are already on screen, there's nothing to do.
-    if (!currentLyricsText) {
+
+    if (mode === 'off') {
+        // No web search: show the library's lyrics as plain text.
+        displaySynced = false;
+        showLocal();
+        return;
+    }
+    if (mode === 'simple') {
+        // Plain text: reuse local lyrics if present, otherwise search once.
+        displaySynced = false;
+        if (currentTrack.lyrics) { showLocal(); } else { fetchLyrics(); }
+        return;
+    }
+    // 'synced' or 'auto': karaoke. Use local LRC if we have it, upgrade plain
+    // local lyrics from the web, or search from scratch when nothing is local.
+    displaySynced = true;
+    if (currentTrack.lyrics_synced) {
+        showLocal();
+    } else if (currentTrack.lyrics) {
+        showLocal();          // keep the plain text visible while we look…
+        trySyncedFromWeb();   // …then swap in synced lyrics if the web has them.
+    } else {
         fetchLyrics();
-    } else if (!currentLyricsSynced) {
-        trySyncedFromWeb();
     }
 }
 
 for (var s = 0; s < modeSegs.length; s++) {
     modeSegs[s].addEventListener('click', function() {
         selectMode(this.dataset.mode);
-    });
-}
-
-if (el.syncToggle) {
-    el.syncToggle.addEventListener('click', function() {
-        syncEnabled = !syncEnabled;
-        localStorage.setItem('lrc-sync', syncEnabled ? 'on' : 'off');
-        if (currentLyricsText) {
-            setLyrics(currentLyricsText, false, currentLyricsSynced);
-        }
     });
 }
 
