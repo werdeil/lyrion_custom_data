@@ -304,6 +304,12 @@ hr {
 }
 
 .np-lyrics {
+    /* position:relative makes this the offsetParent of the .lrc-line
+       children, so their offsetTop is measured against this scroll box.
+       Without it the lines resolve to <body> and the auto-scroll centring
+       over-scrolls (notably on mobile, where the lyrics block sits far down
+       the page), pinning the active line to the top and hiding past lines. */
+    position: relative;
     margin-top: 12px;
     max-height: 420px;
     overflow-y: auto;
