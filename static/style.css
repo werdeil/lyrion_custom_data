@@ -384,6 +384,10 @@ hr {
     color: #9e9e9e;
 }
 
+.np-lyrics-mode-icon {
+    margin-right: 5px;
+}
+
 /* Loading hint shown while a web search runs — useful when local lyrics are
    already on screen, so it's clear a synced version is still being fetched. */
 .np-search-status {
