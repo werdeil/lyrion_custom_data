@@ -317,7 +317,8 @@ hr {
        box; clip horizontally so it doesn't spawn a horizontal scrollbar. */
     overflow-x: hidden;
     white-space: pre-wrap;
-    line-height: 1.5;
+    /* Drives line spacing in both plain and synced modes — keep them in sync. */
+    line-height: 1.9;
     color: #e0e0e0;
     font-size: 0.95rem;
     /* Centre plain lyrics too, so they match the synced (karaoke) layout. */
