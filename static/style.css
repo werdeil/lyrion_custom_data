@@ -322,21 +322,18 @@ hr {
 
 .lrc-line {
     padding: 4px 0;
-    color: #555555;
-    transition: color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
-    opacity: 0.5;
+    color: #a8adb6;
+    transition: color 0.3s ease, transform 0.3s ease;
 }
 
 .lrc-line.near {
-    color: #aaaaaa;
-    opacity: 0.7;
+    color: #d0d3d8;
 }
 
 .lrc-line.active {
-    color: #f5f5f5;
+    color: #ffffff;
     font-weight: bold;
     transform: scale(1.03);
-    opacity: 1;
 }
 
 .np-lyrics.empty {
