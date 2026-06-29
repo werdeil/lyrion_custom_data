@@ -81,6 +81,9 @@ function setLyrionLink(playerId) {
 var lastTrackKey = null;
 var currentTrack = null;
 var lyricsTried = false;
+// Web lyrics resolved for the current track ({text, source}), so re-selecting a
+// mode reuses the result instead of searching again. Reset on every track.
+var webResult = null;
 
 var lrcLines = null;
 var lrcOffset = 0;
@@ -360,6 +363,7 @@ function render(data) {
         setLyrics(data.lyrics || I18N.no_lyrics, !data.lyrics);
         setLyricsSource(data.lyrics ? 'library' : null);
         lyricsTried = false;
+        webResult = null;
         setSearching(false);
 
         // The control is always available while a track plays, so the search
@@ -411,6 +415,7 @@ function fetchLyrics() {
             // Always prefer the synced (LRC) version; fall back to plain text.
             var lyrics = res.synced || res.lyrics;
             if (lyrics) {
+                webResult = { text: lyrics, source: res.source };
                 setLyrics(lyrics, false);
                 setLyricsSource(res.source);
             } else {
@@ -445,6 +450,7 @@ function trySyncedFromWeb() {
             // Only replace the local plain lyrics if the web returned synced
             // (LRC) lyrics — otherwise keep what the library already has.
             if (res.synced) {
+                webResult = { text: res.synced, source: res.source };
                 setLyrics(res.synced, false);
                 setLyricsSource(res.source);
             }
@@ -477,15 +483,21 @@ function selectMode(mode) {
         showLocal();
         return;
     }
-    // 'once' or 'auto': search the current track now, always preferring synced.
-    // If the library already has synced lyrics there's nothing to fetch; if it
-    // only has plain text, upgrade it; otherwise search from scratch.
+    // 'once' or 'auto': resolve synced lyrics for the current track — but only
+    // once. Re-selecting a mode (or switching once<->auto) must reuse the result
+    // already on screen instead of searching again.
     if (currentTrack.lyrics_synced) {
-        showLocal();
+        showLocal();          // library already has synced lyrics
+    } else if (webResult) {
+        // Re-show the result we already fetched for this track, no new request.
+        setLyrics(webResult.text, false);
+        setLyricsSource(webResult.source);
+    } else if (lyricsTried) {
+        showLocal();          // already searched and found nothing — keep local
     } else if (currentTrack.lyrics) {
-        trySyncedFromWeb();   // keep the plain text, swap in synced if found
+        trySyncedFromWeb();   // plain local text → try once to upgrade to synced
     } else {
-        fetchLyrics();
+        fetchLyrics();        // nothing local → search from scratch
     }
 }
 
