@@ -313,6 +313,9 @@ hr {
     margin-top: 12px;
     max-height: 420px;
     overflow-y: auto;
+    /* The active line is scaled (1.03), which makes it a few px wider than the
+       box; clip horizontally so it doesn't spawn a horizontal scrollbar. */
+    overflow-x: hidden;
     white-space: pre-wrap;
     line-height: 1.5;
     color: #e0e0e0;
@@ -331,7 +334,8 @@ hr {
 }
 
 .lrc-line {
-    padding: 4px 0;
+    /* No vertical padding: rely on the container's line-height so synced lines
+       sit at the same spacing as plain text. */
     color: #a8adb6;
     transition: color 0.3s ease, transform 0.3s ease;
 }
