@@ -25,9 +25,7 @@ def index():
 def now_playing_json():
     """Live state of whichever player is currently playing, polled by the page."""
     now = get_active_now_playing()
-    lib = get_track_lyrics(now.get("track_id"))
-    now["lyrics"] = lib["lyrics"]
-    now["lyrics_synced"] = lib["synced"]
+    now["lyrics"] = get_track_lyrics(now.get("track_id"))
     return jsonify(now)
 
 

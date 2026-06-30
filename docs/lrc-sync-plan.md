@@ -14,18 +14,13 @@ Les données sync existent déjà mais ne sont pas exploitées :
 
 **Fichier : `services/database.py`**
 
-`get_track_lyrics()` retourne actuellement le texte brut de `tracks.lyrics`. Le modifier pour détecter si le contenu est au format LRC (présence de lignes `[mm:ss.xx]`) et retourner un dict `{"lyrics": str, "synced": bool}` au lieu d'une simple string.
+`get_track_lyrics()` retourne le texte brut de `tracks.lyrics` (string `str|None`), inchangé.
 
-```python
-def get_track_lyrics(track_id):
-    """Return {"lyrics": str|None, "synced": bool} for a track."""
-    # SQL inchangé : SELECT lyrics FROM tracks WHERE id = ?
-    # Détection LRC : regex sur la première ligne non-vide
-```
+> **Mise à jour** : un flag `synced` (détection LRC dans les paroles biblio) avait été ajouté ici, puis retiré. Les paroles de la bibliothèque sont toujours en plain (le CLI `embed_lyrics` retire les timestamps), donc la détection était du code mort. La fonction reste une simple string.
 
 **Fichier : `routes/nowplaying.py`**
 
-- `/now-playing.json` : adapter pour inclure `lyrics` + `lyrics_synced` dans la réponse JSON (au lieu d'écraser `now["lyrics"]` avec une string brute).
+- `/now-playing.json` : `now["lyrics"] = get_track_lyrics(...)` (string brute dans la réponse JSON).
 - `/lyrics.json` : déjà retourne `{"lyrics", "synced", "source"}` — inchangé, mais le frontend utilisera `synced` au lieu de l'ignorer.
 
 ### Étape 2 — Frontend : parser LRC et rendre ligne-par-ligne
@@ -126,8 +121,8 @@ Ajouter un bouton toggle (visible uniquement quand du LRC est disponible) à cô
 
 | Fichier | Changement |
 |---|---|
-| `services/database.py` | `get_track_lyrics` → retourne `{"lyrics", "synced"}` |
-| `routes/nowplaying.py` | `/now-playing.json` propage `lyrics_synced` |
+| `services/database.py` | `get_track_lyrics` → retourne le texte `str\|None` |
+| `routes/nowplaying.py` | `/now-playing.json` expose `lyrics` (string) |
 | `static/nowplaying.js` | Parser LRC, rendu ligne-par-ligne, `syncLyrics()`, toggle |
 | `static/style.css` | Styles `.lrc-line`, `.active`, `.near`, scroll smooth |
 | `templates/nowplaying.html` | Bouton toggle synced/plain |
@@ -138,5 +133,5 @@ Ajouter un bouton toggle (visible uniquement quand du LRC est disponible) à cô
 - **Pas de changement côté `services/lyrics.py`** : il retourne déjà `synced` séparément.
 - **Réutiliser l'extrapolation existante** : `progress.time` + `syncedAt` donne déjà la position courante entre deux polls (5s). Le sync lyrics s'appuie sur la même logique.
 - **Fallback gracieux** : si pas de LRC (paroles plain Genius, bibliothèque sans timestamps), le rendu reste identique à aujourd'hui (`pre-wrap`).
-- **Tests** : `tests/` est vide — ajouter au minimum un test unitaire du parser LRC et un test de `get_track_lyrics` avec détection synced.
+- **Tests** : test unitaire de `get_track_lyrics` (texte / `None`) dans `tests/test_get_track_lyrics.py`.
 - **Convention de commits** : `feat: sync lyrics highlighting from LRC timestamps` (Conventional Commits, anglais).

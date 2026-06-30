@@ -385,20 +385,19 @@ function render(data) {
         setSearching(false);
 
         // The switch is always available while a track plays.
-        var needsWebSync = data.lyrics && !data.lyrics_synced;
         if (el.modeBlock) {
             el.modeBlock.style.display = '';
             updateSwitch();
         }
 
-        // In auto mode, look the lyrics up on the web straight away — either
-        // because the library has nothing, or because it only has plain text
-        // and we want the synced version.
+        // In auto mode, look the lyrics up on the web straight away: from scratch
+        // when the library has nothing, or to upgrade its (always plain) text to
+        // a synced version when it does.
         if (lyricsMode === 'auto') {
-            if (!data.lyrics) {
-                fetchLyrics();
-            } else if (needsWebSync) {
+            if (data.lyrics) {
                 trySyncedFromWeb();
+            } else {
+                fetchLyrics();
             }
         }
     }
@@ -501,9 +500,7 @@ function setAuto(on) {
     }
     // On: resolve synced lyrics for the current track — but only once. Toggling
     // back on reuses the result already fetched instead of searching again.
-    if (currentTrack.lyrics_synced) {
-        showLocal();          // library already has synced lyrics
-    } else if (webResult) {
+    if (webResult) {
         // Re-show the result we already fetched for this track, no new request
         // and without losing the scroll position (mode change, not a new track).
         setLyrics(webResult.text, false, true);
