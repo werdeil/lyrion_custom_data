@@ -556,7 +556,11 @@ updateSwitch();
 // Programmatic scrolling from syncLyrics() never fires these events, so
 // telling it apart from a real gesture needs no extra bookkeeping — only
 // telling a real gesture apart from an incidental bump does, via the
-// SCROLL_PAUSE_THRESHOLD accumulated below.
+// SCROLL_PAUSE_THRESHOLD accumulated below. These listeners are passive, so
+// the browser applies the native scroll regardless of that bookkeeping; below
+// the threshold, resync immediately rather than waiting for the next
+// periodic syncLyrics() tick, otherwise the delayed snap-back reads as a
+// bounce. Above the threshold, let the native scroll ride and pause instead.
 el.lyrics.addEventListener('wheel', function(e) {
     if (!lrcLines || !autoFollowScroll) { return; }
     var now = Date.now();
@@ -565,7 +569,11 @@ el.lyrics.addEventListener('wheel', function(e) {
     if (now - wheelLastAt > 400) { wheelAccum = 0; }
     wheelLastAt = now;
     wheelAccum += Math.abs(e.deltaY);
-    if (wheelAccum > SCROLL_PAUSE_THRESHOLD) { setAutoFollow(false); }
+    if (wheelAccum > SCROLL_PAUSE_THRESHOLD) {
+        setAutoFollow(false);
+    } else {
+        syncLyrics();
+    }
 }, { passive: true });
 
 el.lyrics.addEventListener('touchstart', function(e) {
@@ -574,7 +582,11 @@ el.lyrics.addEventListener('touchstart', function(e) {
 
 el.lyrics.addEventListener('touchmove', function(e) {
     if (!lrcLines || !autoFollowScroll || touchStartY === null || !e.touches.length) { return; }
-    if (Math.abs(e.touches[0].clientY - touchStartY) > SCROLL_PAUSE_THRESHOLD) { setAutoFollow(false); }
+    if (Math.abs(e.touches[0].clientY - touchStartY) > SCROLL_PAUSE_THRESHOLD) {
+        setAutoFollow(false);
+    } else {
+        syncLyrics();
+    }
 }, { passive: true });
 
 if (el.scrollReset) {
