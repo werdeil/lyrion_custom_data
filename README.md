@@ -20,19 +20,30 @@ A Flask web app for [Lyrion Music Server](https://github.com/LMS-Community/slims
 ## Project structure
 
 ```
-├── app.py                 # Flask entry point (factory)
-├── config.py              # Centralized configuration (env vars)
-├── requirements.txt       # Python dependencies
-├── docker-compose.yml     # Docker deployment
-├── .env.example           # Configuration template
+├── app.py                                 # Flask entry point (factory)
+├── config.py                              # Centralized configuration (env vars)
+├── i18n.py                                # FR/EN UI translations
+├── requirements.txt                       # Python dependencies (web app)
+├── requirements-cli.txt                   # Python dependencies (scripts/ only)
+├── docker-compose.yml                     # Docker deployment
+├── docker-compose.override.yml.example    # Local Compose customization template
+├── .env.example                           # Configuration template
 ├── routes/
-│   ├── nowplaying.py      # Routes: /  and  /now-playing.json
-│   └── custom.py          # Route: /files/<path>
+│   ├── nowplaying.py                      # Routes: /, /now-playing.json, /cover, /lyrics.json
+│   └── custom.py                          # Route: /files/<path>
 ├── services/
-│   ├── lyrion.py          # Lyrion JSON-RPC client
-│   └── database.py        # SQLite access (lyrics, stats)
-└── templates/
-    └── nowplaying.html    # Main dashboard
+│   ├── lyrion.py                          # Lyrion JSON-RPC client
+│   ├── database.py                        # SQLite access (lyrics, stats)
+│   ├── lyrics.py                          # Web lyrics fallback (LRCLIB, Musixmatch, Genius)
+│   └── tags.py                            # Read/embed lyrics into audio file tags
+├── templates/
+│   └── nowplaying.html                    # Main dashboard
+├── static/                                # CSS, JS, icons
+├── scripts/
+│   ├── embed_lyrics.py                    # Embed web lyrics into files' tags
+│   └── embed_lyrics_cron.sh               # Cron wrapper: only re-tags changed files
+├── tests/
+└── docs/screenshots/                      # README screenshots
 ```
 
 ## Requirements

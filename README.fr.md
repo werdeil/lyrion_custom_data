@@ -20,19 +20,30 @@ Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Communit
 ## Structure du projet
 
 ```
-├── app.py                 # Point d'entrée Flask (factory)
-├── config.py              # Configuration centralisée (env vars)
-├── requirements.txt       # Dépendances Python
-├── docker-compose.yml     # Déploiement via Docker
-├── .env.example           # Modèle de configuration
+├── app.py                                 # Point d'entrée Flask (factory)
+├── config.py                              # Configuration centralisée (env vars)
+├── i18n.py                                # Traductions FR/EN de l'interface
+├── requirements.txt                       # Dépendances Python (application web)
+├── requirements-cli.txt                   # Dépendances Python (scripts/ uniquement)
+├── docker-compose.yml                     # Déploiement via Docker
+├── docker-compose.override.yml.example    # Modèle de personnalisation Compose locale
+├── .env.example                           # Modèle de configuration
 ├── routes/
-│   ├── nowplaying.py      # Routes : /  et  /now-playing.json
-│   └── custom.py          # Routes : /files/<path>
+│   ├── nowplaying.py                      # Routes : /, /now-playing.json, /cover, /lyrics.json
+│   └── custom.py                          # Route : /files/<path>
 ├── services/
-│   ├── lyrion.py          # Client JSON-RPC Lyrion
-│   └── database.py        # Accès SQLite (paroles, stats)
-└── templates/
-    └── nowplaying.html    # Dashboard principal
+│   ├── lyrion.py                          # Client JSON-RPC Lyrion
+│   ├── database.py                        # Accès SQLite (paroles, stats)
+│   ├── lyrics.py                          # Recherche web de paroles (LRCLIB, Musixmatch, Genius)
+│   └── tags.py                            # Lecture/écriture des paroles dans les tags audio
+├── templates/
+│   └── nowplaying.html                    # Dashboard principal
+├── static/                                # CSS, JS, icônes
+├── scripts/
+│   ├── embed_lyrics.py                    # Intègre les paroles web dans les tags des fichiers
+│   └── embed_lyrics_cron.sh               # Wrapper cron : ne retague que les fichiers modifiés
+├── tests/
+└── docs/screenshots/                      # Captures d'écran du README
 ```
 
 ## Pré-requis
