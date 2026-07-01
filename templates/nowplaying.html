@@ -38,13 +38,11 @@
                         <div class="np-progress-bar" id="np-progress-bar"></div>
                     </div>
                     <div class="np-lyrics" id="np-lyrics"></div>
+                    <button type="button" class="np-scroll-reset" id="np-scroll-reset" title="{{ t.resume_scroll }}" aria-label="{{ t.resume_scroll }}" hidden>&#8635;</button>
                     <div class="np-lyrics-mode-block" id="np-lyrics-mode-block">
                         <button type="button" class="np-switch" id="np-auto-switch" role="switch" aria-checked="false" title="{{ t.lyrics_search }}" aria-label="{{ t.lyrics_search }}">
                             <span class="np-switch-text"><span class="np-lyrics-mode-icon">&#128269;</span>{{ t.lyrics_auto }}</span>
                             <span class="np-switch-track"><span class="np-switch-thumb"></span></span>
-                        </button>
-                        <button type="button" class="np-scroll-reset" id="np-scroll-reset" title="{{ t.resume_scroll }}" aria-label="{{ t.resume_scroll }}" hidden>
-                            <span class="np-scroll-reset-icon" aria-hidden="true">&#8635;</span>{{ t.resume_scroll }}
                         </button>
                         <span class="np-search-status" id="np-search-status" role="status" aria-label="{{ t.searching }}" title="{{ t.searching }}" hidden>
                             <span class="np-spinner" aria-hidden="true"></span>

@@ -253,6 +253,7 @@ hr {
     grid-column: 2;
     grid-row: 2;
     min-width: 0;
+    position: relative;
 }
 
 .np-title {
@@ -398,28 +399,33 @@ hr {
     display: none;
 }
 
-/* Shown only while the karaoke auto-scroll is paused by a manual scroll;
-   clicking it snaps back to the current line and resumes following it. */
+/* Floating icon button pinned to the corner of the lyrics block — outside the
+   scrolling #np-lyrics box, so it stays put as the user scrolls it. Shown
+   only while the karaoke auto-scroll is paused by a manual scroll; clicking
+   it snaps back to the current line and resumes following it. */
 .np-scroll-reset {
-    display: inline-flex;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 1;
+    display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 999px;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
     border: 1px solid color-mix(in srgb, var(--accent-color) 60%, transparent);
-    background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+    background: color-mix(in srgb, #1a1a1a 75%, var(--accent-color) 25%);
     color: var(--accent-color);
-    font-size: 0.78rem;
+    font-size: 15px;
+    line-height: 1;
     cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .np-scroll-reset:hover {
-    background: color-mix(in srgb, var(--accent-color) 30%, transparent);
-}
-
-.np-scroll-reset-icon {
-    display: inline-block;
-    margin-right: 2px;
+    background: color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
 
 .np-scroll-reset[hidden] {
