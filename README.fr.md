@@ -4,6 +4,8 @@
 
 Application web Flask pour [Lyrion Music Server](https://github.com/LMS-Community/slimserver) (anciennement Logitech Media Server / Squeezebox Server).
 
+![Tableau de bord](docs/screenshots/dashboard-fr.png)
+
 ## Fonctionnalités
 
 - **Now Playing** -- Détecte automatiquement le lecteur en cours de lecture et affiche sa piste (pochette, titre, artiste, album) et ses paroles, rafraîchi via l'API JSON-RPC de Lyrion. Les paroles avec timestamps LRC sont affichées ligne par ligne avec surlignage et défilement automatiques synchronisés à la lecture.

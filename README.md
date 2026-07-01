@@ -4,6 +4,8 @@
 
 A Flask web app for [Lyrion Music Server](https://github.com/LMS-Community/slimserver) (formerly Logitech Media Server / Squeezebox Server).
 
+![Dashboard](docs/screenshots/dashboard-en.png)
+
 ## Features
 
 - **Now Playing** -- Automatically detects the player currently playing and shows its track (cover art, title, artist, album) and lyrics, refreshed live via Lyrion's JSON-RPC API. Lyrics with LRC timestamps are displayed line-by-line with real-time highlighting and auto-scroll synced to playback.
