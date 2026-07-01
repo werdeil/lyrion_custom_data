@@ -238,8 +238,15 @@ function parseLRC(text) {
         var ss = parseFloat(m[2]);
         var t = mm * 60 + ss + offset;
         lastTime = t;
-        var txt = m[3] || '';
-        parsed.push({ time: t, text: txt });
+        // Trim so a timestamp with only whitespace (e.g. "[00:06.13] ") is
+        // treated as a blank separator: rendered as a visible gap and never
+        // allowed to become the active line, like the untimed blank lines above.
+        var txt = (m[3] || '').trim();
+        if (txt === '') {
+            parsed.push({ time: t, text: '', blank: true });
+        } else {
+            parsed.push({ time: t, text: txt });
+        }
     }
     if (!parsed.length) { return null; }
     parsed.sort(function(a, b) { return a.time - b.time; });
