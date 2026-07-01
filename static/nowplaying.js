@@ -551,6 +551,13 @@ if (el.autoSwitch) {
 }
 updateSwitch();
 
+// Short lyrics that already fit the box have nothing to scroll — a gesture
+// on them can't mean "let me scroll away from the highlight", so don't let it
+// trip auto-follow off.
+function isLyricsScrollable() {
+    return el.lyrics.scrollHeight > el.lyrics.clientHeight + 1;
+}
+
 // A deliberate scroll gesture (wheel or touch drag) on the synced lyrics
 // pauses the karaoke auto-follow, so it doesn't fight the user for control.
 // Programmatic scrolling from syncLyrics() never fires these events, so
@@ -562,7 +569,7 @@ updateSwitch();
 // periodic syncLyrics() tick, otherwise the delayed snap-back reads as a
 // bounce. Above the threshold, let the native scroll ride and pause instead.
 el.lyrics.addEventListener('wheel', function(e) {
-    if (!lrcLines || !autoFollowScroll) { return; }
+    if (!lrcLines || !autoFollowScroll || !isLyricsScrollable()) { return; }
     var now = Date.now();
     // A gap between ticks starts a new gesture, so unrelated bumps spread out
     // over time don't add up into a false trigger.
@@ -581,7 +588,7 @@ el.lyrics.addEventListener('touchstart', function(e) {
 }, { passive: true });
 
 el.lyrics.addEventListener('touchmove', function(e) {
-    if (!lrcLines || !autoFollowScroll || touchStartY === null || !e.touches.length) { return; }
+    if (!lrcLines || !autoFollowScroll || !isLyricsScrollable() || touchStartY === null || !e.touches.length) { return; }
     if (Math.abs(e.touches[0].clientY - touchStartY) > SCROLL_PAUSE_THRESHOLD) {
         setAutoFollow(false);
     } else {
