@@ -405,8 +405,11 @@ hr {
    it snaps back to the current line and resumes following it. */
 .np-scroll-reset {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    /* Inset below the progress bar and away from the lyrics box's own edges,
+       so it reads as a floating control rather than sitting flush on top of
+       the progress bar or pinned to a corner. */
+    top: 40px;
+    left: 14px;
     z-index: 1;
     display: flex;
     align-items: center;
@@ -418,10 +421,14 @@ hr {
     border: 1px solid color-mix(in srgb, var(--accent-color) 60%, transparent);
     background: color-mix(in srgb, #1a1a1a 75%, var(--accent-color) 25%);
     color: var(--accent-color);
-    font-size: 15px;
-    line-height: 1;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.np-scroll-reset svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
 }
 
 .np-scroll-reset:hover {

@@ -38,7 +38,11 @@
                         <div class="np-progress-bar" id="np-progress-bar"></div>
                     </div>
                     <div class="np-lyrics" id="np-lyrics"></div>
-                    <button type="button" class="np-scroll-reset" id="np-scroll-reset" title="{{ t.resume_scroll }}" aria-label="{{ t.resume_scroll }}" hidden>&#8635;</button>
+                    <button type="button" class="np-scroll-reset" id="np-scroll-reset" title="{{ t.resume_scroll }}" aria-label="{{ t.resume_scroll }}" hidden>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                        </svg>
+                    </button>
                     <div class="np-lyrics-mode-block" id="np-lyrics-mode-block">
                         <button type="button" class="np-switch" id="np-auto-switch" role="switch" aria-checked="false" title="{{ t.lyrics_search }}" aria-label="{{ t.lyrics_search }}">
                             <span class="np-switch-text"><span class="np-lyrics-mode-icon">&#128269;</span>{{ t.lyrics_auto }}</span>
