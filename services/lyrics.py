@@ -12,8 +12,10 @@ lyrics (LRC), so they come before Genius, which only offers plain text.
 """
 
 import os
+import re
 import time
 import threading
+import unicodedata
 
 import requests
 
@@ -40,6 +42,12 @@ TTL_MISS = 3600
 # silently turned every fetch into a timeout. Give it a generous, configurable
 # budget since this is a user-initiated fallback, not a hot path.
 LRCLIB_TIMEOUT = int(os.getenv("LRCLIB_TIMEOUT", "15"))
+
+# When verifying a result against the requested track (opt-in, used by the batch
+# CLI), how far the provider's reported track length may drift from the file's
+# own duration before we treat it as a different recording. Seconds; overridable
+# for libraries whose durations are noisy.
+VERIFY_DURATION_TOLERANCE = int(os.getenv("LYRICS_VERIFY_DURATION_TOLERANCE", "3"))
 
 _cache = {}
 _cache_lock = threading.Lock()
@@ -73,7 +81,11 @@ def _int_duration(duration):
 
 # --- Providers -------------------------------------------------------------
 # Each provider takes (artist, title, album, duration) and returns either a
-# dict {"lyrics": str|None, "synced": str|None} when it found something, or None.
+# dict {"lyrics": str|None, "synced": str|None, "meta": dict|None} when it found
+# something, or None. "meta" carries the matched candidate's own
+# {artist, title, album, duration} so the caller can verify the result really
+# corresponds to the requested track (see _matches_request); providers set the
+# fields they can and leave the rest None.
 
 
 def _provider_lrclib(artist, title, album, duration):
@@ -125,7 +137,16 @@ def _provider_lrclib(artist, title, album, duration):
 
     if not payload:
         return None
-    return {"lyrics": payload.get("plainLyrics"), "synced": payload.get("syncedLyrics")}
+    return {
+        "lyrics": payload.get("plainLyrics"),
+        "synced": payload.get("syncedLyrics"),
+        "meta": {
+            "artist": payload.get("artistName"),
+            "title": payload.get("trackName"),
+            "album": payload.get("albumName"),
+            "duration": payload.get("duration"),
+        },
+    }
 
 
 _mxm_token = {"value": None, "expires_at": 0}
@@ -213,7 +234,19 @@ def _provider_musixmatch(artist, title, album, duration):
     lyrics = _body("track.lyrics.get").get("lyrics", {}).get("lyrics_body") or None
 
     if lyrics or synced:
-        return {"lyrics": lyrics, "synced": synced}
+        # The matcher echoes the track it actually matched; keep it so the
+        # caller can confirm it lines up with what we asked for.
+        track = _body("matcher.track.get").get("track", {})
+        return {
+            "lyrics": lyrics,
+            "synced": synced,
+            "meta": {
+                "artist": track.get("artist_name"),
+                "title": track.get("track_name"),
+                "album": track.get("album_name"),
+                "duration": track.get("track_length"),
+            },
+        }
     return None
 
 
@@ -252,12 +285,22 @@ def _provider_genius(artist, title, album, duration):
         return None
 
     url = None
+    hit_meta = None
     for section in sections:
         if section.get("type") != "song":
             continue
         for hit in section.get("hits", []):
-            url = hit.get("result", {}).get("url")
+            result = hit.get("result", {})
+            url = result.get("url")
             if url:
+                # Genius exposes no reliable duration/album on a search hit, so
+                # verification can only lean on title + primary artist.
+                hit_meta = {
+                    "artist": (result.get("primary_artist") or {}).get("name"),
+                    "title": result.get("title"),
+                    "album": None,
+                    "duration": None,
+                }
                 break
         if url:
             break
@@ -273,7 +316,7 @@ def _provider_genius(artist, title, album, duration):
 
     text = _parse_genius_html(page.text)
     if text:
-        return {"lyrics": text, "synced": None}
+        return {"lyrics": text, "synced": None, "meta": hit_meta}
     return None
 
 
@@ -296,13 +339,63 @@ def _enabled_providers():
     return [(n, PROVIDERS[n]) for n in names if n in PROVIDERS]
 
 
-def fetch_lyrics(track_id, artist, title, album=None, duration=None, force=False):
+# Qualifiers and credits that should not defeat a match: parenthetical/bracketed
+# notes ("(Remastered 2011)", "[Live]") and everything from a "feat." onwards.
+_PAREN_RE = re.compile(r"[\(\[\{].*?[\)\]\}]")
+_FEAT_RE = re.compile(r"\b(feat|ft|featuring)\b.*", re.IGNORECASE)
+_NONALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _normalize(text):
+    """Fold a title/artist to a comparable core: accents stripped, lower-cased,
+    parenthetical qualifiers and "feat." credits removed, punctuation collapsed."""
+    if not text:
+        return ""
+    text = unicodedata.normalize("NFKD", str(text))
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = text.lower()
+    text = _PAREN_RE.sub(" ", text)
+    text = _FEAT_RE.sub(" ", text)
+    text = _NONALNUM_RE.sub(" ", text)
+    return " ".join(text.split())
+
+
+def _matches_request(meta, artist, title, duration):
+    """True if a provider's matched candidate lines up with the requested track.
+
+    Title and artist must be equal after normalisation. When both durations are
+    known they must fall within VERIFY_DURATION_TOLERANCE seconds — the surest
+    way to tell the real recording from a live/remix/cover of the same song. A
+    candidate that carries no duration (e.g. Genius) is accepted on title +
+    artist alone, since that is all it can offer.
+    """
+    if not meta:
+        return False
+    if _normalize(meta.get("title")) != _normalize(title):
+        return False
+    if _normalize(meta.get("artist")) != _normalize(artist):
+        return False
+    want = _int_duration(duration)
+    got = _int_duration(meta.get("duration"))
+    if want is not None and got is not None:
+        return abs(want - got) <= VERIFY_DURATION_TOLERANCE
+    return True
+
+
+def fetch_lyrics(track_id, artist, title, album=None, duration=None, force=False, verify=False):
     """Resolve lyrics for the current track from the web, with caching.
 
     Tries each enabled provider in order and keeps the first non-empty result.
     Returns a dict {"lyrics": str|None, "synced": str|None, "source": str}.
     `source` is the winning provider name (kept across cache hits so the UI can
-    show where the lyrics came from), or "none" when nothing was found.
+    show where the lyrics came from), "none" when nothing was found, or
+    "rejected" when a candidate came back but failed verification.
+
+    With `verify=True` (used by the batch CLI, which writes lyrics permanently
+    into tags), a provider's result is only accepted when its own metadata
+    matches the requested track (see _matches_request). This trades some recall
+    for precision: better to leave a file without lyrics than to stamp it with
+    the wrong song's.
     """
     if not title or not artist:
         return {"lyrics": None, "synced": None, "source": "none"}
@@ -310,28 +403,38 @@ def fetch_lyrics(track_id, artist, title, album=None, duration=None, force=False
     # track_id alone isn't a reliable cache key: streamed "flow"/mix sources
     # can keep the same playlist track_id for an entire session while artist
     # and title change underneath it, which would otherwise serve the first
-    # song's lyrics for every later one.
-    cache_key = f"{track_id or ''}|{artist}|{title}"
+    # song's lyrics for every later one. `verify` is part of the key too, since
+    # a lenient and a verified lookup can legitimately differ.
+    cache_key = f"{track_id or ''}|{artist}|{title}|{int(bool(verify))}"
     if not force:
         cached = _cache_get(cache_key)
         if cached is not None:
             return dict(cached)
 
     result = {"lyrics": None, "synced": None, "source": "none"}
+    rejected = False
     for name, provider in _enabled_providers():
         try:
             found = provider(artist, title, album, duration)
         except Exception:
             # A misbehaving provider must not break the chain.
             found = None
-        if found and (found.get("lyrics") or found.get("synced")):
-            result = {
-                "lyrics": found.get("lyrics"),
-                "synced": found.get("synced"),
-                "source": name,
-            }
-            break
+        if not (found and (found.get("lyrics") or found.get("synced"))):
+            continue
+        if verify and not _matches_request(found.get("meta"), artist, title, duration):
+            # A candidate came back but doesn't match the requested track; skip
+            # it rather than write the wrong lyrics, and try the next provider.
+            rejected = True
+            continue
+        result = {
+            "lyrics": found.get("lyrics"),
+            "synced": found.get("synced"),
+            "source": name,
+        }
+        break
 
-    found = bool(result["lyrics"] or result["synced"])
-    _cache_set(cache_key, dict(result), TTL_HIT if found else TTL_MISS)
+    hit = bool(result["lyrics"] or result["synced"])
+    if not hit and rejected:
+        result["source"] = "rejected"
+    _cache_set(cache_key, dict(result), TTL_HIT if hit else TTL_MISS)
     return result

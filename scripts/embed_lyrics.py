@@ -8,12 +8,22 @@ Lyrion pick the changes up on its next scan.
 
 Usage:
     python scripts/embed_lyrics.py /path/to/music [--dry-run] [--force]
-                                   [--clear] [--delay 0.5] [--verbose]
+                                   [--clear] [--no-verify] [--delay 0.5]
+                                   [--verbose]
+
+Because tags are written permanently (and then propagate to Lyrion, other
+players and backups), a result is only accepted when the provider's own
+metadata matches the file's title/artist/duration — a mismatch is worse than no
+lyrics, and a miss can always be retried later. Pass --no-verify to turn that
+check off and take whatever a provider returns.
 
 --clear drops the existing lyrics tag when nothing is found online, so the file
 matches what providers actually carry. Like --force it processes already-tagged
 files too (it must look them up to know whether to clear), so a --clear run
 hits the web for every file; combine with --force to also overwrite when found.
+A result that fails verification counts as "nothing usable found", so --clear
+treats it like a miss and still drops the tag — verification decides what gets
+written, not what gets cleared.
 
 Several targets are accepted, and shell-style wildcards work even when quoted
 (or when the shell finds no match and passes the pattern through literally):
@@ -125,6 +135,12 @@ def parse_args(argv):
              "every file).",
     )
     parser.add_argument(
+        "--no-verify", action="store_true",
+        help="Accept a provider's lyrics even when its own title/artist/duration "
+             "don't match the file. Off by default: since tags are written "
+             "permanently, a mismatched result is worse than no lyrics.",
+    )
+    parser.add_argument(
         "--dry-run", action="store_true",
         help="Report what would happen without writing any tag.",
     )
@@ -146,7 +162,7 @@ def main(argv=None):
 
     counts = {
         "scanned": 0, "written": 0, "already": 0,
-        "not_found": 0, "cleared": 0, "no_meta": 0, "failed": 0,
+        "not_found": 0, "rejected": 0, "cleared": 0, "no_meta": 0, "failed": 0,
     }
     dry = " (dry-run)" if args.dry_run else ""
 
@@ -179,14 +195,17 @@ def main(argv=None):
             title=meta["title"],
             album=meta.get("album"),
             duration=meta.get("duration"),
+            verify=not args.no_verify,
         )
         plain = result.get("lyrics")
         if not plain and result.get("synced"):
             plain = tags.lrc_to_plain(result["synced"])
 
         if not plain:
-            # Nothing online. With --clear, drop an existing tag so the file
-            # reflects what providers carry; otherwise just report the miss.
+            # Nothing usable online — either a genuine miss or a candidate that
+            # failed verification. With --clear, drop an existing tag in both
+            # cases so the file reflects what providers actually carry:
+            # verification governs what we *write*, not what we *clear*.
             if already and args.clear:
                 if args.dry_run:
                     counts["cleared"] += 1
@@ -199,6 +218,9 @@ def main(argv=None):
                     except tags.LyricsTagError as exc:
                         counts["failed"] += 1
                         print(f"[fail]      {rel}: {exc}")
+            elif result.get("source") == "rejected":
+                counts["rejected"] += 1
+                print(f"[reject]    {rel}  (no confident match)")
             else:
                 counts["not_found"] += 1
                 print(f"[none]      {rel}")
@@ -234,6 +256,7 @@ def main(argv=None):
     print(f"cleared:     {counts['cleared']}{dry}")
     print(f"already:     {counts['already']}")
     print(f"not found:   {counts['not_found']}")
+    print(f"rejected:    {counts['rejected']}")
     print(f"no metadata: {counts['no_meta']}")
     print(f"failed:      {counts['failed']}")
 
