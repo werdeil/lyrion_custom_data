@@ -329,10 +329,13 @@ hr {
 .np-lyrics.lrc-mode {
     white-space: normal;
     scroll-behavior: smooth;
-    /* No top padding: the first line starts at the top and the highlight
-       descends until it reaches its anchor (~⅓), instead of opening on a big
-       empty gap. Keep bottom padding so the final lines can still scroll up. */
-    padding: 0 0 40% 0;
+    /* No padding: the first line starts at the top and the highlight descends
+       until it reaches its anchor (~⅓), instead of opening on a big empty
+       gap. With no bottom padding either, the browser clamps scrollTop once
+       the last lines are reached, so the highlight keeps descending past the
+       anchor and settles at the bottom for the end of the song, instead of
+       stopping short with the final lines centred and blank space below. */
+    padding: 0;
 }
 
 .lrc-line {
